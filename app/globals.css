@@ -66,6 +66,8 @@
   --gold: #f5c451;
   --success: #34d399;
   --danger: #f43f5e;
+
+  --radius: 0.75rem;
 }
 /* 화이트 모드 (White Mode) - html에 .white 클래스가 붙을 때 */
 .white {
