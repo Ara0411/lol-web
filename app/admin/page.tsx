@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShieldAlert, Coins, Swords, Users, Save, UserPlus, Trash2 } from 'lucide-react'
+import { ShieldAlert, Coins, Swords, Users, Save, UserPlus, Trash2, PlusCircle, Building2 } from 'lucide-react'
 import { useAdmin } from '@/lib/use-admin'
 import { supabase } from '@/lib/supabase'
 import { PageTitle } from '@/components/page-title'
@@ -16,6 +16,15 @@ export default function AdminDashboard() {
   const [matches, setMatches] = useState<any[]>([])
   const [players, setPlayers] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+
+  // 신규 팀 생성 폼 상태
+  const [newTeam, setNewTeam] = useState({
+    id: '',
+    name: '',
+    short: '',
+    points: 15400,
+    color: '#22d3ee'
+  })
 
   // 신규 선수 추가 폼 상태
   const [newPlayer, setNewPlayer] = useState({
@@ -54,6 +63,42 @@ export default function AdminDashboard() {
     setDataLoading(false)
   }
 
+  // ➕ 신규 팀 생성 핸들러
+  const handleAddTeam = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTeam.id || !newTeam.name || !newTeam.short) {
+      return alert('팀 ID, 이름, 약칭을 모두 입력해주세요!')
+    }
+
+    const { error } = await supabase.from('teams').insert([newTeam])
+    if (error) {
+      alert('팀 생성 실패: ' + error.message)
+    } else {
+      alert('새로운 팀이 성공적으로 생성되었습니다!')
+      setNewTeam({
+        id: '',
+        name: '',
+        short: '',
+        points: 15400,
+        color: '#22d3ee'
+      })
+      fetchAdminData()
+    }
+  }
+
+  // 🗑️ 팀 삭제 핸들러
+  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+    if (!confirm(`정말 "${teamName}" 팀을 삭제하시겠습니까? 소속 선수들의 팀 정보가 꼬일 수 있으니 주의하세요!`)) return
+
+    const { error } = await supabase.from('teams').delete().eq('id', teamId)
+    if (error) {
+      alert('팀 삭제 실패: ' + error.message)
+    } else {
+      alert('팀이 삭제되었습니다.')
+      fetchAdminData()
+    }
+  }
+
   // 💾 팀 포인트 수정
   const handleUpdateTeamPoint = async (teamId: string, currentPoints: number) => {
     const input = prompt('수정할 팀 포인트를 입력하세요:', String(currentPoints))
@@ -70,9 +115,17 @@ export default function AdminDashboard() {
     }
   }
 
-  // 💾 매치 정보 수정
+  // 💾 매치 정보 수정 (팀 이름, 점수, 상태 통합 제어)
   const handleUpdateMatch = async (matchId: number, field: string, currentValue: any) => {
-    const input = prompt(`새로운 ${field} 값을 입력하세요:`, String(currentValue))
+    const fieldLabels: Record<string, string> = {
+      team1: '팀1 이름',
+      team2: '팀2 이름',
+      score1: '팀1 점수',
+      score2: '팀2 점수',
+      status: '경기 상태'
+    }
+
+    const input = prompt(`새로운 ${fieldLabels[field] || field} 값을 입력하세요:`, String(currentValue))
     if (input === null) return
     
     let updateData = {}
@@ -82,8 +135,13 @@ export default function AdminDashboard() {
         return alert("상태는 UPCOMING(예정), LIVE(진행 중), FINISHED(종료) 중 하나여야 합니다.")
       }
       updateData = { status: upperStatus }
+    } else if (field === 'team1' || field === 'team2') {
+      if (!input.trim()) return alert('팀 이름을 올바르게 입력해주세요.')
+      updateData = { [field]: input.trim() }
     } else {
-      updateData = { [field]: parseInt(input, 10) }
+      const parsedNum = parseInt(input, 10)
+      if (isNaN(parsedNum)) return alert('숫자만 입력 가능합니다.')
+      updateData = { [field]: parsedNum }
     }
 
     const { error } = await supabase.from('matches').update(updateData).eq('id', matchId)
@@ -184,15 +242,108 @@ export default function AdminDashboard() {
       <PageTitle
         overline="ADMIN MASTER"
         title="리그 관리자 대시보드"
-        subtitle="롤이터 리그의 팀 포인트, 경기 스코어, 선수 카드 등록 및 스탯을 실시간으로 제어할 수 있는 마스터 패널입니다."
+        subtitle="롤이터 리그의 팀 관리, 포인트, 경기 스코어, 선수 카드 등록 및 스탯을 실시간으로 제어할 수 있는 마스터 패널입니다."
       />
 
-      {/* 1. 팀 포인트 제어 패널 */}
+      {/* 1. 팀 관리 및 생성 패널 */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Building2 className="size-5 text-cyan-400" />
+          <h2 className="font-display text-lg font-bold uppercase tracking-wide text-cyan-400">
+            팀 관리 및 생성
+          </h2>
+        </div>
+
+        {/* 신규 팀 등록 폼 */}
+        <GlassCard className="p-6 border-cyan/30 bg-cyan/5">
+          <h3 className="text-sm font-bold text-cyan-300 mb-4 flex items-center gap-2">
+            <PlusCircle className="size-4" /> 신규 팀 생성
+          </h3>
+          <form onSubmit={handleAddTeam} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 ID (고유 영문)</label>
+              <input
+                type="text"
+                placeholder="예: team_test1"
+                value={newTeam.id}
+                onChange={(e) => setNewTeam({ ...newTeam, id: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 이름</label>
+              <input
+                type="text"
+                placeholder="예: test1"
+                value={newTeam.name}
+                onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 약칭 (Short)</label>
+              <input
+                type="text"
+                placeholder="예: TST"
+                value={newTeam.short}
+                onChange={(e) => setNewTeam({ ...newTeam, short: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">초기 포인트</label>
+              <input
+                type="number"
+                value={newTeam.points}
+                onChange={(e) => setNewTeam({ ...newTeam, points: Number(e.target.value) })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-background hover:bg-cyan-400 transition-colors"
+              >
+                + 팀 생성하기
+              </button>
+            </div>
+          </form>
+        </GlassCard>
+
+        {/* 기존 등록된 팀 목록 및 관리 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {teams.map((team) => (
+            <GlassCard key={team.id} className="p-4 border-cyan/20 bg-cyan/5 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-lg">{team.name} <span className="text-xs text-muted-foreground">({team.short})</span></p>
+                <p className="text-sm text-gold font-semibold">{team.points.toLocaleString()} 포인트</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleUpdateTeamPoint(team.id, team.points)}
+                  className="rounded bg-white/10 px-2.5 py-1 text-xs font-bold hover:bg-white/20"
+                >
+                  포인트 수정
+                </button>
+                <button
+                  onClick={() => handleDeleteTeam(team.id, team.name)}
+                  className="text-muted-foreground hover:text-red-400 transition-colors"
+                  title="팀 삭제"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      </section>
+
+      {/* 2. 팀 포인트 제어 패널 */}
       <section>
         <div className="mb-4 flex items-center gap-2">
           <Coins className="size-5 text-gold" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-gold">
-            팀 포인트 관리
+            팀 포인트 현황 관리
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -213,12 +364,12 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 2. 대진표 및 경기 스코어 제어 패널 */}
+      {/* 3. 대진표 및 경기 스코어 제어 패널 */}
       <section>
         <div className="mb-4 flex items-center gap-2">
           <Swords className="size-5 text-cyan-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-cyan-400">
-            경기 스코어 및 상태 제어
+            경기 스코어 및 팀 제어
           </h2>
         </div>
         <div className="space-y-3">
@@ -236,6 +387,18 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <button 
+                    onClick={() => handleUpdateMatch(match.id, 'team1', match.team1)}
+                    className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
+                  >
+                    팀1 변경
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateMatch(match.id, 'team2', match.team2)}
+                    className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
+                  >
+                    팀2 변경
+                  </button>
                   <button 
                     onClick={() => handleUpdateMatch(match.id, 'score1', match.score1 ?? 0)}
                     className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
@@ -261,7 +424,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 3. 선수 카드 추가 & 관리 패널 */}
+      {/* 4. 선수 카드 추가 & 관리 패널 */}
       <section className="space-y-6">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-purple-400" />

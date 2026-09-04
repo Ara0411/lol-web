@@ -43,9 +43,12 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const [user, setUser] = useState<DiscordUser | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // 페이지가 켜질 때 쿠키에서 로그인된 유저 정보 읽어오기 및 관리자 권한 확인
+  // 컴포넌트 마운트 완료 체크 (하이드레이션 에러 방지)
   useEffect(() => {
+    setIsMounted(true)
+
     const cookies = document.cookie.split(';')
     const userCookie = cookies.find((c) => c.trim().startsWith('discord_user='))
     if (userCookie) {
@@ -113,7 +116,7 @@ export function SiteHeader() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 xl:flex">
           {NAV.map((item) => {
-            const active = pathname === item.href
+            const active = isMounted && pathname === item.href
             return (
               <Link
                 key={item.href}
@@ -134,7 +137,7 @@ export function SiteHeader() {
         {/* User bar & Admin Badge */}
         <div className="flex items-center gap-3">
           {/* 🛡️ 관리자 계정일 때만 모든 페이지 상단에 띄워지는 황금빛 마스터 배지 */}
-          {isAdmin && (
+          {isMounted && isAdmin && (
             <Link
               href="/admin"
               className="hidden sm:flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-gold animate-pulse shadow-[0_0_12px_rgba(250,204,21,0.3)] transition-transform hover:scale-105"
@@ -144,7 +147,7 @@ export function SiteHeader() {
             </Link>
           )}
 
-          {user ? (
+          {isMounted && user ? (
             <div className="flex items-center gap-3">
               <Link
                 href="/mypage"
@@ -168,7 +171,7 @@ export function SiteHeader() {
                 <LogOut className="size-4" />
               </button>
             </div>
-          ) : (
+          ) : isMounted ? (
             <button
               onClick={handleDiscordLogin}
               className="flex items-center gap-2 rounded-lg bg-[#5865F2] px-3 py-2 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(88,101,242,0.8)]"
@@ -177,6 +180,8 @@ export function SiteHeader() {
               <span className="hidden sm:inline">Discord Login / Join Server</span>
               <span className="sm:hidden">Login</span>
             </button>
+          ) : (
+            <div className="w-[100px] h-9" /> // SSR 로딩 빈 공간 유지
           )}
 
           <button
