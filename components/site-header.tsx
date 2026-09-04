@@ -46,21 +46,21 @@ export function SiteHeader() {
   const [user, setUser] = useState<DiscordUser | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isWhiteMode, setIsWhiteMode] = useState(true)
 
   useEffect(() => {
     setIsMounted(true)
 
     // 테마 초기 설정 확인 (로컬스토리지 또는 기본 다크모드)
     const storedTheme = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const prefersWhite = window.matchMedia('(prefers-color-scheme: White)').matches
     
-    if (storedTheme === 'light' || (!storedTheme && !prefersDark)) {
-      setIsDarkMode(false)
-      document.documentElement.classList.remove('dark')
+    if (storedTheme === 'light' || (!storedTheme && !prefersWhite)) {
+      setIsWhiteMode(false)
+      document.documentElement.classList.remove('white')
     } else {
-      setIsDarkMode(true)
-      document.documentElement.classList.add('dark')
+      setIsWhiteMode(true)
+      document.documentElement.classList.add('White')
     }
 
     const cookies = document.cookie.split(';')
@@ -89,14 +89,14 @@ export function SiteHeader() {
   }, [])
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark')
+    if (isWhiteMode) {
+      document.documentElement.classList.remove('white')
       localStorage.setItem('theme', 'light')
-      setIsDarkMode(false)
+      setIsWhiteMode(false)
     } else {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-      setIsDarkMode(true)
+      document.documentElement.classList.add('white')
+      localStorage.setItem('theme', 'white')
+      setIsWhiteMode(true)
     }
   }
 
@@ -176,11 +176,11 @@ export function SiteHeader() {
           {/* 테마 전환 토글 버튼 */}
           <button
             onClick={toggleTheme}
-            title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            title={isWhiteMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
             className="grid size-9 shrink-0 place-items-center rounded-xl border border-border/80 bg-white/5 text-muted-foreground hover:text-foreground hover:border-cyan/40 transition-colors"
             aria-label="Toggle theme"
           >
-            {isDarkMode ? <Sun className="size-4 text-amber-400" /> : <Moon className="size-4 text-blue-400" />}
+            {isWhiteMode ? <Moon className="size-4 text-blue-400" />  : <Sun className="size-4 text-amber-400" />}
           </button>
 
           {isMounted && isAdmin && (

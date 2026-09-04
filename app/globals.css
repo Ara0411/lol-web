@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant white (&:is(.white *));
 
 @theme inline {
   --color-background: var(--background);
@@ -39,8 +39,36 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* 기본값: 화이트 모드 (Light Mode) */
+/* 기본값: 다크 모드 (dark Mode) */
 :root {
+    color-scheme: dark;
+  --background: #121622;
+  --foreground: #e8ecf5;
+  --card: #10121b;
+  --card-foreground: #e8ecf5;
+  --popover: #10121b;
+  --popover-foreground: #e8ecf5;
+  --primary: #22d3ee;
+  --primary-foreground: #04121a;
+  --secondary: #1a1d2b;
+  --secondary-foreground: #e8ecf5;
+  --muted: #161927;
+  --muted-foreground: #8b93ad;
+  --accent: #a855f7;
+  --accent-foreground: #f5f0ff;
+  --destructive: #f43f5e;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #22d3ee;
+
+  --neon-cyan: #22d3ee;
+  --neon-purple: #a855f7;
+  --gold: #f5c451;
+  --success: #34d399;
+  --danger: #f43f5e;
+}
+/* 화이트 모드 (White Mode) - html에 .white 클래스가 붙을 때 */
+.white {
   color-scheme: light;
   --background: #f7f8fa;
   --foreground: #222733;
@@ -68,34 +96,6 @@
   --danger: #e11d48;
 
   --radius: 0.75rem;
-}
-/* 다크 모드 (Dark Mode) - html에 .dark 클래스가 붙을 때 */
-.dark {
-  color-scheme: dark;
-  --background: #121622;
-  --foreground: #e8ecf5;
-  --card: #10121b;
-  --card-foreground: #e8ecf5;
-  --popover: #10121b;
-  --popover-foreground: #e8ecf5;
-  --primary: #22d3ee;
-  --primary-foreground: #04121a;
-  --secondary: #1a1d2b;
-  --secondary-foreground: #e8ecf5;
-  --muted: #161927;
-  --muted-foreground: #8b93ad;
-  --accent: #a855f7;
-  --accent-foreground: #f5f0ff;
-  --destructive: #f43f5e;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #22d3ee;
-
-  --neon-cyan: #22d3ee;
-  --neon-purple: #a855f7;
-  --gold: #f5c451;
-  --success: #34d399;
-  --danger: #f43f5e;
 }
 
 @layer base {
