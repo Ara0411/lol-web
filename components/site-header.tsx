@@ -23,12 +23,12 @@ import { supabase } from '@/lib/supabase'
 
 const NAV = [
   { href: '/', label: '홈 / 실시간', icon: Radio },
-  { href: '/schedule', label: '경기 일정 및 대진표', icon: CalendarDays },
+  // { href: '/schedule', label: '경기 일정 및 대진표', icon: CalendarDays },
   { href: '/teams', label: '참가 팀', icon: Users },
   { href: '/shop', label: '선수 카드 & 상점', icon: IdCard },
-  { href: '/transfer', label: '이적 시장 & FA', icon: ArrowLeftRight },
-  { href: '/history', label: '매치 전적', icon: History },
-  { href: '/scrim', label: '스크림 현황', icon: Users },
+  // { href: '/transfer', label: '이적 시장 & FA', icon: ArrowLeftRight },
+  // { href: '/history', label: '매치 전적', icon: History },
+  // { href: '/scrim', label: '스크림 현황', icon: Users },
   { href: '/rules', label: '규정 및 FAQ', icon: BookOpen },
 ]
 
