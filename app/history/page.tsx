@@ -30,11 +30,11 @@ function MatchLogCard({ match }: { match: MatchLog }) {
             <div className="flex items-center gap-2">
               <span className="font-display text-sm font-bold text-cyan">{match.winner}</span>
               <NeonBadge tone="gold">
-                <Trophy className="size-3" /> Winner
+                <Trophy className="size-3" /> 승리 팀
               </NeonBadge>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              defeated {match.loser} · {match.scoreLine}
+              {match.loser} 상대로 승리 · {match.scoreLine}
             </p>
           </div>
         </div>
@@ -42,7 +42,7 @@ function MatchLogCard({ match }: { match: MatchLog }) {
           <div className="flex items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-1.5">
             <Crown className="size-3.5 text-gold" />
             <div className="leading-tight">
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground">MVP</p>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground">오늘의 MVP</p>
               <p className="text-xs font-bold text-gold">
                 {match.mvp.name}{' '}
                 <span className="font-normal text-muted-foreground">
@@ -65,14 +65,14 @@ function MatchLogCard({ match }: { match: MatchLog }) {
           <div className="mb-3 flex items-center gap-2">
             <Swords className="size-3.5 text-cyan" />
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              Picks
+              챔피언 픽 (Picks)
             </span>
           </div>
           <div className="space-y-2">
             <div className="rounded-lg border border-cyan/20 bg-cyan/[0.04] p-2.5">
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-cyan">
-                  Blue · {match.winner}
+                  블루팀 · {match.winner}
                 </span>
                 <span className="font-display text-xs font-bold text-cyan">{match.kdaBlue}</span>
               </div>
@@ -85,7 +85,7 @@ function MatchLogCard({ match }: { match: MatchLog }) {
             <div className="rounded-lg border border-danger/20 bg-danger/[0.04] p-2.5">
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-danger">
-                  Red · {match.loser}
+                  레드팀 · {match.loser}
                 </span>
                 <span className="font-display text-xs font-bold text-danger">{match.kdaRed}</span>
               </div>
@@ -103,7 +103,7 @@ function MatchLogCard({ match }: { match: MatchLog }) {
           <div className="mb-3 flex items-center gap-2">
             <Ban className="size-3.5 text-danger" />
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              10 Bans
+              전체 밴 (10 Bans)
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -121,15 +121,15 @@ export default function HistoryPage() {
   return (
     <div className="space-y-8">
       <PageTitle
-        overline="Results · Draft Analysis"
-        title="Match History & Pick/Ban"
+        overline="RESULTS & DRAFT"
+        title="매치 전적 및 밴픽 분석"
         subtitle="경기 결과, MVP, 밴/픽 조합과 KDA 요약을 한눈에. 각 매치의 밴픽 데이터를 분석하세요."
       />
       <div className="grid gap-2 sm:grid-cols-3">
         {[
-          { label: 'Matches Played', value: '48', Icon: Swords, tone: 'text-cyan' },
-          { label: 'Champions Banned', value: '312', Icon: Ban, tone: 'text-danger' },
-          { label: 'MVP Awards', value: '48', Icon: Star, tone: 'text-gold' },
+          { label: '진행된 총 경기 수', value: '48', Icon: Swords, tone: 'text-cyan' },
+          { label: '누적 밴 된 챔피언', value: '312', Icon: Ban, tone: 'text-danger' },
+          { label: '선정된 MVP 횟수', value: '48', Icon: Star, tone: 'text-gold' },
         ].map((s) => (
           <GlassCard key={s.label} className="flex items-center gap-3 p-4">
             <span className="grid size-10 place-items-center rounded-lg bg-white/5">

@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     if (field === 'status') {
       const upperStatus = input.toUpperCase()
       if (!['UPCOMING', 'LIVE', 'FINISHED'].includes(upperStatus)) {
-        return alert("상태는 UPCOMING, LIVE, FINISHED 중 하나여야 합니다.")
+        return alert("상태는 UPCOMING(예정), LIVE(진행 중), FINISHED(종료) 중 하나여야 합니다.")
       }
       updateData = { status: upperStatus }
     } else {
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
     }
   }
 
-// 관리자 전용 선수 정보 수정 함수 예시
+  // 관리자 전용 선수 정보 수정 함수 예시
   const handleUpdatePlayer = async (playerId: string, field: string, currentValue: any) => {
     const input = prompt(`선수의 새로운 ${field} 값을 입력하세요:`, String(currentValue))
     if (input === null) return
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     }
 
     const payload = {
-      id: 'player_' + Math.random().toString(36).substring(2, 9), // 임의 고유 ID 생성
+      id: 'player_' + Math.random().toString(36).substring(2, 9),
       summoner_name: newPlayer.summoner_name,
       position: newPlayer.position,
       tier: newPlayer.tier,
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
     <div className="space-y-12 pb-20">
       <PageTitle
         overline="ADMIN MASTER"
-        title="League Admin Dashboard"
+        title="리그 관리자 대시보드"
         subtitle="롤이터 리그의 팀 포인트, 경기 스코어, 선수 카드 등록 및 스탯을 실시간으로 제어할 수 있는 마스터 패널입니다."
       />
 
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
         <div className="mb-4 flex items-center gap-2">
           <Coins className="size-5 text-gold" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-gold">
-            Team Points Control
+            팀 포인트 관리
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -200,13 +200,13 @@ export default function AdminDashboard() {
             <GlassCard key={team.id} className="p-4 flex items-center justify-between border-gold/20 bg-gold/5">
               <div>
                 <p className="font-bold text-lg">{team.name}</p>
-                <p className="text-sm text-muted-foreground">{team.points.toLocaleString()} pts</p>
+                <p className="text-sm text-muted-foreground">{team.points.toLocaleString()} 포인트</p>
               </div>
               <button 
                 onClick={() => handleUpdateTeamPoint(team.id, team.points)}
                 className="flex items-center gap-1 rounded bg-gold/20 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-black transition-all"
               >
-                <Save className="size-3" /> Edit
+                <Save className="size-3" /> 수정
               </button>
             </GlassCard>
           ))}
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
         <div className="mb-4 flex items-center gap-2">
           <Swords className="size-5 text-cyan-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-cyan-400">
-            Match Score & Status Control
+            경기 스코어 및 상태 제어
           </h2>
         </div>
         <div className="space-y-3">
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-2">
           <Users className="size-5 text-purple-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-purple-400">
-            Player Card Management & Creation
+            선수 카드 관리 및 생성
           </h2>
         </div>
 
@@ -320,16 +320,16 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">카드 등급 (Rarity)</label>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">카드 등급</label>
               <select
                 value={newPlayer.rarity}
                 onChange={(e) => setNewPlayer({ ...newPlayer, rarity: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
               >
-                <option value="common">Common</option>
-                <option value="rare">Rare</option>
-                <option value="epic">Epic</option>
-                <option value="legendary">Legendary</option>
+                <option value="common">일반 (Common)</option>
+                <option value="rare">레어 (Rare)</option>
+                <option value="epic">에픽 (Epic)</option>
+                <option value="legendary">전설 (Legendary)</option>
               </select>
             </div>
             <div>
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-                <span>Salary: <strong className="text-gold">{player.salary}</strong></span>
+                <span>몸값: <strong className="text-gold">{player.salary}</strong></span>
                 <div className="flex gap-1.5">
                   <button 
                     onClick={() => handleUpdatePlayer(player.id, 'overall', player.overall)}
@@ -396,7 +396,7 @@ export default function AdminDashboard() {
                     onClick={() => handleUpdatePlayer(player.id, 'salary', player.salary)}
                     className="rounded bg-gold/20 px-2.5 py-1 font-bold text-gold hover:bg-gold hover:text-black"
                   >
-                    샐러리 수정
+                    몸값 수정
                   </button>
                 </div>
               </div>

@@ -20,9 +20,9 @@ const TRADE_META: Record<
   string,
   { tone: 'cyan' | 'success' | 'danger'; label: string; Icon: typeof ArrowLeftRight }
 > = {
-  trade: { tone: 'cyan', label: 'Trade', Icon: ArrowLeftRight },
-  signing: { tone: 'success', label: 'Signing', Icon: UserPlus },
-  release: { tone: 'danger', label: 'Release', Icon: UserMinus },
+  trade: { tone: 'cyan', label: '트레이드', Icon: ArrowLeftRight },
+  signing: { tone: 'success', label: '영입', Icon: UserPlus },
+  release: { tone: 'danger', label: '방출', Icon: UserMinus },
 }
 
 const CAP = 5100
@@ -87,7 +87,6 @@ export default function TransferPage() {
       // 3. 트레이드 피드 가져오기
       const { data: feedData } = await supabase.from('trades').select('*').order('id', { ascending: false })
       if (feedData) {
-        // 🛡️ DB 컬럼명(from_team, to_team)을 화면이 원하는 이름(from, to)으로 깔끔하게 변환
         const formattedTrades: TradeData[] = feedData.map((item: any) => ({
           id: item.id,
           type: item.type,
@@ -117,8 +116,8 @@ export default function TransferPage() {
   return (
     <div className="space-y-10">
       <PageTitle
-        overline="Roster Management"
-        title="Transfer Market & FA"
+        overline="ROSTER MANAGEMENT"
+        title="이적 시장 및 FA"
         subtitle="자유계약(FA) 선수를 영입하고, 공식 팀의 트레이드 현황과 포인트 밸런스를 추적하세요."
       />
 
@@ -127,7 +126,7 @@ export default function TransferPage() {
         <div className="mb-4 flex items-center gap-2">
           <Coins className="size-4 text-gold" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Team Point Balance
+            팀 포인트 현황 (Team Points)
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -146,7 +145,7 @@ export default function TransferPage() {
                   <span className="font-display text-xl font-black text-gold tabular-nums">
                     {team.points.toLocaleString()}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">pts</span>
+                  <span className="text-[11px] text-muted-foreground">P</span>
                 </div>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                   <div
@@ -166,9 +165,9 @@ export default function TransferPage() {
           <div className="mb-4 flex items-center gap-2">
             <Users className="size-4 text-cyan" />
             <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-              Free Agent List
+              자유 계약 선수 (Free Agents)
             </h2>
-            <NeonBadge tone="success">{freeAgents.length} Available</NeonBadge>
+            <NeonBadge tone="success">{freeAgents.length}명 대기 중</NeonBadge>
           </div>
           <div className="space-y-3">
             {freeAgents.length === 0 ? (
@@ -180,7 +179,6 @@ export default function TransferPage() {
                 const roleKey = (fa.position || 'MID').toUpperCase()
                 const pos = (POSITION_META as any)[roleKey] || POSITION_META['MID']
                 
-                // 🛡️ 타입 에러 방지용 안전 장치 (as keyof typeof TIER_COLOR)
                 const tierKey = (fa.tier || 'Master') as keyof typeof TIER_COLOR
                 const tierColor = (TIER_COLOR as any)[tierKey] || '#ffffff'
 
@@ -204,7 +202,7 @@ export default function TransferPage() {
                       <div className="min-w-0">
                         <p className="truncate font-display text-sm font-bold">{fa.summoner}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          <span style={{ color: tierColor }}>{fa.tier}</span> · Prev:{' '}
+                          <span style={{ color: tierColor }}>{fa.tier}</span> · 이전 팀:{' '}
                           {fa.lastTeam} · {fa.note}
                         </p>
                       </div>
@@ -218,14 +216,14 @@ export default function TransferPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Asking
+                          요청 몸값
                         </p>
                         <p className="flex items-center gap-1 font-display text-sm font-bold text-gold">
-                          <Coins className="size-3.5" /> {fa.askingPoints}
+                          <Coins className="size-3.5" /> {fa.askingPoints} P
                         </p>
                       </div>
                       <button className="rounded-lg bg-cyan px-3 py-2 text-xs font-bold uppercase tracking-wide text-background transition-transform hover:-translate-y-0.5 neon-cyan-glow">
-                        Sign
+                        영입 신청
                       </button>
                     </div>
                   </GlassCard>
@@ -239,7 +237,7 @@ export default function TransferPage() {
         <div>
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="size-4 text-purple" />
-            <h2 className="font-display text-sm font-bold uppercase tracking-wide">Trade Feed</h2>
+            <h2 className="font-display text-sm font-bold uppercase tracking-wide">실시간 이적 피드 (Trade Feed)</h2>
           </div>
           <GlassCard className="p-2">
             <div className="relative space-y-1 pl-4">
@@ -275,7 +273,7 @@ export default function TransferPage() {
                       </p>
                       {t.points > 0 ? (
                         <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-gold">
-                          <Coins className="size-3" /> {t.points.toLocaleString()} pts
+                          <Coins className="size-3" /> {t.points.toLocaleString()} P
                         </p>
                       ) : null}
                     </div>

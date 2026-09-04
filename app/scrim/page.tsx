@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { Users, Radio, Gamepad2, Lock, Plus } from 'lucide-react'
 import { GlassCard } from '@/components/ui/glass-card'
 import { NeonBadge } from '@/components/ui/neon-badge'
@@ -9,9 +12,9 @@ const STATUS_META: Record<
   ScrimRoom['status'],
   { tone: 'success' | 'danger' | 'muted'; label: string }
 > = {
-  waiting: { tone: 'success', label: 'Recruiting' },
-  'in-game': { tone: 'danger', label: 'In Game' },
-  full: { tone: 'muted', label: 'Full' },
+  waiting: { tone: 'success', label: '모집 중' },
+  'in-game': { tone: 'danger', label: '경기 중' },
+  full: { tone: 'muted', label: '인원 마감' },
 }
 
 export default function ScrimPage() {
@@ -22,21 +25,21 @@ export default function ScrimPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageTitle
-          overline="Live Practice"
-          title="Scrim Live Status"
-          subtitle="실시간 스크림 모집 현황. 빈 자리를 확인하고 팀 연습에 바로 합류하세요."
+          overline="LIVE PRACTICE"
+          title="실시간 스크림 현황"
+          subtitle="실시간 스크림 방 및 연습 매칭 현황입니다. 빈자리를 확인하고 팀 연습에 바로 합류하세요."
         />
         <button className="inline-flex items-center gap-2 self-start rounded-lg bg-cyan px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-background transition-transform hover:-translate-y-0.5 neon-cyan-glow sm:self-auto">
-          <Plus className="size-4" /> Create Room
+          <Plus className="size-4" /> 방 만들기
         </button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {[
-          { label: 'Active Rooms', value: SCRIM_ROOMS.length, Icon: Gamepad2, tone: 'text-cyan' },
-          { label: 'Recruiting Now', value: waiting, Icon: Radio, tone: 'text-success' },
-          { label: 'Players Online', value: totalPlayers, Icon: Users, tone: 'text-purple' },
+          { label: '개설된 총 방', value: SCRIM_ROOMS.length, Icon: Gamepad2, tone: 'text-cyan' },
+          { label: '모집 중인 방', value: waiting, Icon: Radio, tone: 'text-success' },
+          { label: '참여 중인 인원', value: totalPlayers, Icon: Users, tone: 'text-purple' },
         ].map((s) => (
           <GlassCard key={s.label} className="flex items-center gap-3 p-4">
             <span className="grid size-10 place-items-center rounded-lg bg-white/5">
@@ -54,7 +57,6 @@ export default function ScrimPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {SCRIM_ROOMS.map((room) => {
           const meta = STATUS_META[room.status]
-          const pct = Math.round((room.filled / room.slots) * 100)
           const isFull = room.filled >= room.slots
           return (
             <GlassCard key={room.id} hover className="p-5">
@@ -66,7 +68,7 @@ export default function ScrimPage() {
                   <div>
                     <p className="font-display text-base font-bold">{room.name}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Host · {room.host} · {room.mode}
+                      방장 · {room.host} · {room.mode}
                     </p>
                   </div>
                 </div>
@@ -87,7 +89,7 @@ export default function ScrimPage() {
               {/* Slot progress */}
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-muted-foreground">Players Waiting</span>
+                  <span className="font-semibold text-muted-foreground">참여 대기 인원</span>
                   <span className="font-display font-bold">
                     <span className={isFull ? 'text-danger' : 'text-cyan'}>{room.filled}</span>
                     <span className="text-muted-foreground"> / {room.slots}</span>
@@ -121,10 +123,10 @@ export default function ScrimPage() {
               >
                 {isFull ? (
                   <span className="inline-flex items-center gap-1.5">
-                    <Lock className="size-3.5" /> Room Full
+                    <Lock className="size-3.5" /> 마감된 방입니다
                   </span>
                 ) : (
-                  `Join Scrim (${room.slots - room.filled} slots left)`
+                  `스크림 참가하기 (${room.slots - room.filled}자리 남음)`
                 )}
               </button>
             </GlassCard>

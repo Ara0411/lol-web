@@ -50,7 +50,7 @@ function BracketMatch({ teamA, teamB, scoreA, scoreB }: { teamA: string; teamB: 
                 win ? 'text-cyan' : 'text-muted-foreground',
               )}
             >
-              {t.name || 'TBD'}
+              {t.name || '미정 (TBD)'}
             </span>
             <span
               className={cn(
@@ -136,8 +136,8 @@ export default function SchedulePage() {
   return (
     <div className="space-y-10">
       <PageTitle
-        overline="Season 5 · Playoffs"
-        title="Schedule & Brackets"
+        overline="SEASON 5 · PLAYOFFS"
+        title="경기 일정 및 대진표"
         subtitle="플레이오프 대진표와 주간 경기 일정을 확인하세요. 8강부터 결승까지 실시간 연동됩니다."
       />
 
@@ -146,22 +146,22 @@ export default function SchedulePage() {
         <div className="mb-5 flex items-center gap-2">
           <Trophy className="size-4 text-gold" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Tournament Bracket
+            토너먼트 대진표 (Bracket)
           </h2>
         </div>
         <div className="overflow-x-auto pb-2">
           <div className="flex min-w-max items-stretch gap-10">
-            <BracketColumn title="Quarterfinals" matches={quarterfinals} />
-            <BracketColumn title="Semifinals" matches={semifinals} />
+            <BracketColumn title="8강전 (Quarterfinals)" matches={quarterfinals} />
+            <BracketColumn title="4강전 (Semifinals)" matches={semifinals} />
             <div className="flex min-w-56 flex-col justify-center gap-6">
               <p className="text-center font-display text-xs font-bold uppercase tracking-[0.2em] text-gold">
-                Grand Final
+                결승전 (Grand Final)
               </p>
               <div className="relative rounded-xl border border-gold/40 bg-gold/5 p-3 gold-glow">
                 <div className="mb-2 flex items-center justify-center gap-1.5">
                   <Trophy className="size-4 text-gold" />
                   <span className="text-[11px] font-bold uppercase tracking-widest text-gold">
-                    Championship
+                    챔피언십 결정전
                   </span>
                 </div>
                 {finals.length > 0 ? (
@@ -185,14 +185,14 @@ export default function SchedulePage() {
         <div className="mb-4 flex items-center gap-2">
           <CalendarDays className="size-4 text-cyan" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Weekly Match Schedule
+            주간 경기 일정표 (Weekly Schedule)
           </h2>
         </div>
         <GlassCard className="overflow-hidden">
           <div className="hidden grid-cols-[120px_1fr_auto] gap-4 border-b border-border/60 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground sm:grid">
-            <span>Day / Time</span>
-            <span>Match</span>
-            <span>Round</span>
+            <span>경기 시간</span>
+            <span>매치 정보</span>
+            <span>진행 단계</span>
           </div>
           <div className="divide-y divide-border/50">
             {matches.map((m) => {
@@ -234,12 +234,12 @@ export default function SchedulePage() {
                     <span className="text-[11px] text-muted-foreground">{m.round_name}</span>
                     {isLive ? (
                       <NeonBadge tone="danger" className="animate-live">
-                        <Radio className="size-3" /> Live
+                        <Radio className="size-3" /> 생방송 중 (LIVE)
                       </NeonBadge>
                     ) : isDone ? (
-                      <NeonBadge tone="muted">Final</NeonBadge>
+                      <NeonBadge tone="muted">종료됨 (Final)</NeonBadge>
                     ) : (
-                      <NeonBadge tone="cyan">Upcoming</NeonBadge>
+                      <NeonBadge tone="cyan">경기 예정</NeonBadge>
                     )}
                   </div>
                 </div>

@@ -55,9 +55,9 @@ export default function RulesPage() {
   return (
     <div className="space-y-10">
       <PageTitle
-        overline="Referee Handbook"
-        title="Rules & FAQ"
-        subtitle="심판 / 운영진 관점의 공식 룰북과 자주 묻는 질문. 대회 참가 전 반드시 숙지하세요."
+        overline="REFEREE HANDBOOK"
+        title="규정 및 자주 묻는 질문 (FAQ)"
+        subtitle="심판 및 운영진 관점의 공식 룰북과 자주 묻는 질문입니다. 대회 참가 전 반드시 숙지해 주세요."
       />
 
       {/* Rulebook */}
@@ -65,7 +65,7 @@ export default function RulesPage() {
         <div className="mb-4 flex items-center gap-2">
           <ShieldAlert className="size-4 text-danger" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Organizer Rulebook
+            대회 공식 룰북 (Organizer Rulebook)
           </h2>
         </div>
         <div className="grid gap-5 lg:grid-cols-3">
@@ -98,7 +98,7 @@ export default function RulesPage() {
         <div className="mb-4 flex items-center gap-2">
           <HelpCircle className="size-4 text-cyan" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Frequently Asked Questions
+            자주 묻는 질문 (FAQ)
           </h2>
         </div>
         <div className="space-y-3">

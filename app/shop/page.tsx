@@ -84,8 +84,8 @@ export default function ShopPage() {
     <div className="space-y-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageTitle
-          overline="Roster · Collection"
-          title="Player Cards & Shop"
+          overline="ROSTER & COLLECTION"
+          title="선수 카드 및 상점"
           subtitle="FIFA 스타일 선수 카드를 수집하고, 팀/인게임 포인트로 프레임과 배경을 커스터마이징하세요."
         />
         <GlassCard className="flex items-center gap-3 self-start px-4 py-3 sm:self-auto">
@@ -94,10 +94,10 @@ export default function ShopPage() {
           </span>
           <div>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Point Balance
+              보유 포인트 (Balance)
             </p>
             <p className="font-display text-lg font-black text-gold tabular-nums">
-              {balance.toLocaleString()}
+              {balance.toLocaleString()} P
             </p>
           </div>
         </GlassCard>
@@ -122,7 +122,7 @@ export default function ShopPage() {
                   : { borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }
               }
             >
-              {f === 'ALL' ? 'All Roles' : `${f} · ${POSITION_META[f].ko}`}
+              {f === 'ALL' ? '전체 포지션' : `${f} · ${POSITION_META[f].ko}`}
             </button>
           )
         })}
@@ -146,7 +146,7 @@ export default function ShopPage() {
         <div className="mb-4 flex items-center gap-2">
           <Sparkles className="size-4 text-purple" />
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            Card Customization Shop
+            카드 커스텀 상점 (Customization Shop)
           </h2>
           <span className="text-xs text-muted-foreground">프레임 · 보더 · 애니메이션 배경</span>
         </div>
@@ -175,7 +175,7 @@ export default function ShopPage() {
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="flex items-center gap-1 font-display text-sm font-bold text-gold">
-                      <Coins className="size-3.5" /> {item.price.toLocaleString()}
+                      <Coins className="size-3.5" /> {item.price.toLocaleString()} P
                     </span>
                     <button
                       onClick={() => buy(item.id, item.price)}
@@ -191,13 +191,13 @@ export default function ShopPage() {
                     >
                       {isOwned ? (
                         <>
-                          <Check className="size-3.5" /> Owned
+                          <Check className="size-3.5" /> 보유 중
                         </>
                       ) : affordable ? (
-                        'Buy'
+                        '구매하기'
                       ) : (
                         <>
-                          <Lock className="size-3.5" /> Locked
+                          <Lock className="size-3.5" /> 포인트 부족
                         </>
                       )}
                     </button>
