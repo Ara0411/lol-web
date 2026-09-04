@@ -39,7 +39,38 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* 기본값: 화이트 모드 (Light Mode) */
 :root {
+  color-scheme: light;
+  --background: #f7f8fa;
+  --foreground: #222733;
+  --card: #ffffff;
+  --card-foreground: #222733;
+  --popover: #ffffff;
+  --popover-foreground: #222733;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f6;
+  --secondary-foreground: #222733;
+  --muted: #eef2f6;
+  --muted-foreground: #717d96;
+  --accent: #7c3aed;
+  --accent-foreground: #ffffff;
+  --destructive: #e11d48;
+  --border: rgba(0, 0, 0, 0.06);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: #0284c7;
+
+  --neon-cyan: #0284c7;
+  --neon-purple: #7c3aed;
+  --gold: #b45309;
+  --success: #047857;
+  --danger: #e11d48;
+
+  --radius: 0.75rem;
+}
+/* 다크 모드 (Dark Mode) - html에 .dark 클래스가 붙을 때 */
+.dark {
   color-scheme: dark;
   --background: #121622;
   --foreground: #e8ecf5;
@@ -65,8 +96,6 @@
   --gold: #f5c451;
   --success: #34d399;
   --danger: #f43f5e;
-
-  --radius: 0.75rem;
 }
 
 @layer base {
@@ -79,8 +108,8 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(60rem 40rem at 12% -10%, rgba(34, 211, 238, 0.09), transparent 60%),
-      radial-gradient(55rem 40rem at 92% 0%, rgba(168, 85, 247, 0.1), transparent 60%);
+      radial-gradient(60rem 40rem at 12% -10%, rgba(34, 211, 238, 0.06), transparent 60%),
+      radial-gradient(55rem 40rem at 92% 0%, rgba(168, 85, 247, 0.07), transparent 60%);
     background-attachment: fixed;
   }
 }
@@ -89,7 +118,7 @@
   /* Glassmorphism surface */
   .glass {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--border);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
   }
@@ -121,8 +150,8 @@
 
   .grid-bg {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
     background-size: 34px 34px;
   }
 }
@@ -149,7 +178,7 @@
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b0d14;
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(34, 211, 238, 0.25);

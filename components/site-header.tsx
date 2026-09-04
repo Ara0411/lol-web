@@ -17,6 +17,8 @@ import {
   LogIn,
   LogOut,
   ShieldCheck,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -44,9 +46,22 @@ export function SiteHeader() {
   const [user, setUser] = useState<DiscordUser | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(true)
 
   useEffect(() => {
     setIsMounted(true)
+
+    // 테마 초기 설정 확인 (로컬스토리지 또는 기본 다크모드)
+    const storedTheme = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    
+    if (storedTheme === 'light' || (!storedTheme && !prefersDark)) {
+      setIsDarkMode(false)
+      document.documentElement.classList.remove('dark')
+    } else {
+      setIsDarkMode(true)
+      document.documentElement.classList.add('dark')
+    }
 
     const cookies = document.cookie.split(';')
     const userCookie = cookies.find((c) => c.trim().startsWith('discord_user='))
@@ -73,6 +88,18 @@ export function SiteHeader() {
     }
   }, [])
 
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+      setIsDarkMode(false)
+    } else {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+      setIsDarkMode(true)
+    }
+  }
+
   const handleLogout = () => {
     document.cookie = 'discord_user=; Max-Age=0; path=/;'
     setUser(null)
@@ -93,7 +120,6 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/70 backdrop-blur-xl">
-      {/* max-w를 조금 더 넓게 쓰거나 간격 최적화 */}
       <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -110,7 +136,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        {/* Desktop nav: whitespace-nowrap과 촘촘한 간격으로 두줄 꺾임 원천 방지 */}
+        {/* Desktop nav */}
         <nav className="hidden items-center gap-0.5 2xl:gap-1 xl:flex shrink-0">
           {NAV.map((item) => {
             const active = isMounted && pathname === item.href
@@ -145,8 +171,18 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* User bar & Admin Badge */}
+        {/* User bar & Theme Toggle & Admin Badge */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* 테마 전환 토글 버튼 */}
+          <button
+            onClick={toggleTheme}
+            title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            className="grid size-9 shrink-0 place-items-center rounded-xl border border-border/80 bg-white/5 text-muted-foreground hover:text-foreground hover:border-cyan/40 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDarkMode ? <Sun className="size-4 text-amber-400" /> : <Moon className="size-4 text-blue-400" />}
+          </button>
+
           {isMounted && isAdmin && (
             <Link
               href="/admin"

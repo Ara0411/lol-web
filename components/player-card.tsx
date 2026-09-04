@@ -38,27 +38,27 @@ export function PlayerCard({
   const displayChampions = player?.topChampions || topChampions || ['아리', '이즈리얼', '신짜오'];
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md transition-all hover:border-neon-cyan/50 hover:shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-card/70 p-4 backdrop-blur-md transition-all hover:border-cyan/50 hover:shadow-[0_0_15px_rgba(2,132,199,0.15)]">
       {/* 상단 프로필 및 티어 정보 */}
-      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+      <div className="flex items-center gap-3 border-b border-border pb-3">
         <img
           src={displayAvatar}
           alt={displayName}
-          className="h-12 w-12 rounded-full border border-white/20 object-cover"
+          className="h-12 w-12 rounded-full border border-border object-cover"
         />
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-white text-lg">{displayName}</h4>
+            <h4 className="font-bold text-foreground text-lg">{displayName}</h4>
             {destructionScore !== undefined && (
-              <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
                 멸망전 점수: {destructionScore}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <NeonBadge tone="cyan">{displayTier}</NeonBadge>
-            <span className="text-xs text-gray-400">
-              주포: <strong className="text-white">{displayPos}</strong> | 부포: <strong className="text-gray-300">{displaySubPos}</strong>
+            <span className="text-xs text-muted-foreground">
+              주포: <strong className="text-foreground">{displayPos}</strong> | 부포: <strong className="text-muted-foreground">{displaySubPos}</strong>
             </span>
           </div>
         </div>
@@ -66,30 +66,30 @@ export function PlayerCard({
 
       {/* 전적 및 챔피언 정보 (승률 / 판수 / 주챔 3개) */}
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="bg-white/5 p-2 rounded-lg text-center">
-          <div className="text-xs text-gray-400">승률</div>
-          <div className="font-bold text-emerald-400">{displayWinRate}%</div>
+        <div className="bg-secondary/60 p-2 rounded-lg text-center">
+          <div className="text-xs text-muted-foreground">승률</div>
+          <div className="font-bold text-emerald-600 dark:text-emerald-400">{displayWinRate}%</div>
         </div>
-        <div className="bg-white/5 p-2 rounded-lg text-center">
-          <div className="text-xs text-gray-400">내전 판수</div>
-          <div className="font-bold text-white">{displayTotalGames}판</div>
+        <div className="bg-secondary/60 p-2 rounded-lg text-center">
+          <div className="text-xs text-muted-foreground">내전 판수</div>
+          <div className="font-bold text-foreground">{displayTotalGames}판</div>
         </div>
       </div>
 
       {/* 주챔피언 3개 */}
-      <div className="mt-3">
-        <div className="text-xs text-gray-400 mb-1">주력 챔피언 (Top 3)</div>
-        <div className="flex gap-1.5">
+    <div className="mt-3">
+        <div className="text-xs text-muted-foreground mb-1">주력 챔피언 (Top 3)</div>
+      <div className="flex gap-1.5">
           {(displayChampions || []).slice(0, 3).map((champ: string, index: number) => (
-            <span
-              key={index}
-              className="flex-1 bg-white/10 text-center text-xs py-1 rounded text-gray-200 truncate px-1"
-            >
-              {champ}
-            </span>
-          ))}
-        </div>
+          <span
+            key={index}
+              className="flex-1 bg-secondary/80 text-center text-xs py-1 rounded text-foreground truncate px-1 border border-border/40"
+          >
+            {champ}
+          </span>
+        ))}
       </div>
+    </div>
     </div>
   );
 }
