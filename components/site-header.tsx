@@ -22,14 +22,14 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
 const NAV = [
-  { href: '/', label: '홈 / 실시간', icon: Radio },
-  // { href: '/schedule', label: '경기 일정 및 대진표', icon: CalendarDays },
-  { href: '/teams', label: '참가 팀', icon: Users },
-  { href: '/shop', label: '선수 카드 & 상점', icon: IdCard },
-  // { href: '/transfer', label: '이적 시장 & FA', icon: ArrowLeftRight },
-  // { href: '/history', label: '매치 전적', icon: History },
-  // { href: '/scrim', label: '스크림 현황', icon: Users },
-  { href: '/rules', label: '규정 및 FAQ', icon: BookOpen },
+  { href: '/', label: '홈 / 실시간', icon: Radio, comingSoon: false },
+  { href: '/schedule', label: '경기 일정 및 대진표', icon: CalendarDays, comingSoon: true },
+  { href: '/teams', label: '참가 팀', icon: Users, comingSoon: false },
+  { href: '/shop', label: '선수 카드 & 상점', icon: IdCard, comingSoon: false },
+  { href: '/transfer', label: '이적 시장 & FA', icon: ArrowLeftRight, comingSoon: true },
+  { href: '/history', label: '매치 전적', icon: History, comingSoon: true },
+  { href: '/scrim', label: '스크림 현황', icon: Users, comingSoon: true },
+  { href: '/rules', label: '규정 및 FAQ', icon: BookOpen, comingSoon: false },
 ]
 
 interface DiscordUser {
@@ -45,7 +45,6 @@ export function SiteHeader() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
-  // 컴포넌트 마운트 완료 체크 (하이드레이션 에러 방지)
   useEffect(() => {
     setIsMounted(true)
 
@@ -56,7 +55,6 @@ export function SiteHeader() {
         const userData = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
         setUser(userData)
 
-        // 🛡️ Supabase에서 해당 유저의 관리자 권한(is_admin) 체크
         const checkAdmin = async () => {
           const { data, error } = await supabase
             .from('users')
@@ -75,7 +73,6 @@ export function SiteHeader() {
     }
   }, [])
 
-  // 로그아웃 (쿠키 삭제 후 새로고침)
   const handleLogout = () => {
     document.cookie = 'discord_user=; Max-Age=0; path=/;'
     setUser(null)
@@ -83,7 +80,6 @@ export function SiteHeader() {
     window.location.href = '/'
   }
 
-  // 디스코드 로그인 페이지로 이동
   const handleDiscordLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID
     const redirectUri = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI
@@ -97,9 +93,10 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      {/* max-w를 조금 더 넓게 쓰거나 간격 최적화 */}
+      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="grid size-9 place-items-center rounded-lg border border-cyan/40 bg-cyan/10 neon-cyan-glow">
             <Swords className="size-5 text-cyan" />
           </span>
@@ -107,22 +104,36 @@ export function SiteHeader() {
             <span className="block font-display text-base font-extrabold uppercase tracking-tight text-glow-cyan">
               LoL-Eiter
             </span>
-            <span className="block text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground">
+            <span className="block text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
               League · 롤이터
             </span>
           </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 xl:flex">
+        {/* Desktop nav: whitespace-nowrap과 촘촘한 간격으로 두줄 꺾임 원천 방지 */}
+        <nav className="hidden items-center gap-0.5 2xl:gap-1 xl:flex shrink-0">
           {NAV.map((item) => {
             const active = isMounted && pathname === item.href
+            
+            if (item.comingSoon) {
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => alert(`"${item.label}" 메뉴는 현재 서면 진행 중이거나 오픈 준비 중입니다!`)}
+                  className="flex items-center gap-1 rounded-lg px-2.5 py-2 text-[11px] 2xl:text-xs font-semibold uppercase tracking-wide text-muted-foreground/50 hover:bg-white/5 hover:text-muted-foreground transition-colors whitespace-nowrap cursor-pointer"
+                >
+                  <span>{item.label}</span>
+                  <span className="rounded bg-white/10 px-1 py-0.5 text-[8px] font-extrabold text-muted-foreground">SOON</span>
+                </button>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors',
+                  'rounded-lg px-2.5 py-2 text-[11px] 2xl:text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap',
                   active
                     ? 'bg-cyan/10 text-cyan'
                     : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
@@ -135,12 +146,11 @@ export function SiteHeader() {
         </nav>
 
         {/* User bar & Admin Badge */}
-        <div className="flex items-center gap-3">
-          {/* 🛡️ 관리자 계정일 때만 모든 페이지 상단에 띄워지는 황금빛 마스터 배지 */}
+        <div className="flex items-center gap-3 shrink-0">
           {isMounted && isAdmin && (
             <Link
               href="/admin"
-              className="hidden sm:flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-gold animate-pulse shadow-[0_0_12px_rgba(250,204,21,0.3)] transition-transform hover:scale-105"
+              className="hidden sm:flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-gold animate-pulse shadow-[0_0_12px_rgba(250,204,21,0.3)] transition-transform hover:scale-105 whitespace-nowrap"
             >
               <ShieldCheck className="size-4" />
               <span>ADMIN MASTER</span>
@@ -174,14 +184,14 @@ export function SiteHeader() {
           ) : isMounted ? (
             <button
               onClick={handleDiscordLogin}
-              className="flex items-center gap-2 rounded-lg bg-[#5865F2] px-3 py-2 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(88,101,242,0.8)]"
+              className="flex items-center gap-2 rounded-lg bg-[#5865F2] px-3 py-2 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(88,101,242,0.8)] whitespace-nowrap"
             >
               <LogIn className="size-4" />
-              <span className="hidden sm:inline">Discord Login / Join Server</span>
+              <span className="hidden sm:inline">디스코드로 로그인 하기</span>
               <span className="sm:hidden">Login</span>
             </button>
           ) : (
-            <div className="w-[100px] h-9" /> // SSR 로딩 빈 공간 유지
+            <div className="w-[100px] h-9" />
           )}
 
           <button
@@ -194,7 +204,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* 📱 모바일 화면 전용 드롭다운 메뉴 (open 상태일 때만 표시) */}
+      {/* 📱 모바일 화면 전용 드롭다운 메뉴 */}
       {open && (
         <div className="border-t border-border/70 bg-background/95 px-4 py-4 backdrop-blur-2xl xl:hidden">
           <nav className="flex flex-col gap-1.5">
@@ -211,6 +221,23 @@ export function SiteHeader() {
             {NAV.map((item) => {
               const active = pathname === item.href
               const Icon = item.icon
+
+              if (item.comingSoon) {
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => alert(`"${item.label}" 메뉴는 현재 서면 진행 중이거나 오픈 준비 중입니다!`)}
+                    className="flex items-center justify-between rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground/50 hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="size-4" />
+                      <span>{item.label}</span>
+                    </div>
+                    <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-extrabold text-muted-foreground">SOON</span>
+                  </button>
+                )
+              }
+
               return (
                 <Link
                   key={item.href}
