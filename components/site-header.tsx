@@ -53,11 +53,10 @@ export function SiteHeader() {
         const userData = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
         setUser(userData)
 
-      
         // 🛡️ Supabase에서 해당 유저의 관리자 권한(is_admin) 체크
         const checkAdmin = async () => {
           const { data, error } = await supabase
-            .from('users') // 👈 'profiles'를 기존 테이블명인 'users'로 변경!
+            .from('users')
             .select('is_admin')
             .eq('id', userData.id)
             .single()
@@ -147,7 +146,6 @@ export function SiteHeader() {
 
           {user ? (
             <div className="flex items-center gap-3">
-              {/* 🚀 프로필 박스 크기를 넉넉하게 넓히고 세로 깨짐 방지 */}
               <Link
                 href="/mypage"
                 className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-white/5 px-3 py-1.5 transition-colors hover:border-cyan/40 hover:bg-white/10"
@@ -190,6 +188,44 @@ export function SiteHeader() {
           </button>
         </div>
       </div>
+
+      {/* 📱 모바일 화면 전용 드롭다운 메뉴 (open 상태일 때만 표시) */}
+      {open && (
+        <div className="border-t border-border/70 bg-background/95 px-4 py-4 backdrop-blur-2xl xl:hidden">
+          <nav className="flex flex-col gap-1.5">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg border border-gold/50 bg-gold/15 px-3 py-2.5 text-xs font-extrabold uppercase tracking-widest text-gold mb-2"
+              >
+                <ShieldCheck className="size-4" />
+                <span>ADMIN MASTER</span>
+              </Link>
+            )}
+            {NAV.map((item) => {
+              const active = pathname === item.href
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
+                    active
+                      ? 'bg-cyan/10 text-cyan'
+                      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
+                  )}
+                >
+                  <Icon className="size-4" />
+                  <span>{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
