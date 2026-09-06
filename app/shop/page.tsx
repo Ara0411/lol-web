@@ -166,7 +166,7 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Customization Shop */}
+      {/* Customization Shop
       <div>
         <div className="mb-4 flex items-center gap-2">
           <Sparkles className="size-4 text-purple" />
@@ -232,7 +232,7 @@ export default function ShopPage() {
             )
           })}
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }
