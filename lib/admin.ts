@@ -5,7 +5,7 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
   if (!userId) return false
 
   const { data, error } = await supabase
-    .from('profiles') // 또는 유저 정보를 저장하는 테이블명
+    .from('users') // 또는 유저 정보를 저장하는 테이블명
     .select('is_admin')
     .eq('id', userId)
     .single()
