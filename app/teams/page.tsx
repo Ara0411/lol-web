@@ -91,7 +91,7 @@ export default function TeamsPage() {
 
       {teams.length === 0 ? (
         <GlassCard className="p-12 text-center">
-          <p className="text-muted-foreground">등록된 팀 데이터가 없습니다. 어드민 페이지에서 팀을 세팅해주세요.</p>
+          <p className="text-muted-foreground">등록된 팀 데이터가 없습니다.</p>
         </GlassCard>
       ) : (
         teams.map((team) => {
