@@ -77,6 +77,7 @@ export default function ShopPage() {
             totalGames: totalGames,
             wins: wins,
             losses: losses,
+            favorite_champions: item.favorite_champions || [],
           }
         })
         setPlayers(formatted)
