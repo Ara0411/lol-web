@@ -39,7 +39,8 @@ export function PlayerCard({
   const displayTotalGames = player?.totalGames ?? totalGames ?? calculatedTotal;
   const displayWinRate = player?.winRate ?? winRate ?? (displayTotalGames > 0 ? Math.round((resolvedWins / displayTotalGames) * 100) : 50);
   
-  const displayChampions = player?.topChampions || topChampions || ['아리', '이즈리얼', '신짜오'];
+  // Supabase의 favorite_champions 컬럼 및 기존 props 우선순위 반영
+  const displayChampions = player?.favorite_champions || player?.topChampions || topChampions || ['미등록', '미등록', '미등록'];
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-card/70 p-4 backdrop-blur-md transition-all hover:border-cyan/50 hover:shadow-[0_0_15px_rgba(2,132,199,0.15)]">
