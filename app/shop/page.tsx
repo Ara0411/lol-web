@@ -58,6 +58,7 @@ export default function ShopPage() {
           return {
             id: item.id,
             summoner: item.summoner_name || '무명의소환사',
+            avatar_url: item.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png', // 👈 이 부분을 추가해야 아바타가 전달됩니다!
             ko: item.position_ko || '플레이어',
             position: (item.position || 'MID') as Position,
             tier: item.tier || 'Emerald',
