@@ -27,34 +27,58 @@ export default function ShopPage() {
   const [players, setPlayers] = useState<PlayerCardType[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 🚀 Supabase의 players 테이블에서 데이터 긁어오기
+  // 🚀 Supabase의 players 테이블과 user_stats 테이블을 동시에 긁어와서 결합하기
   useEffect(() => {
     const fetchPlayers = async () => {
-      const { data, error } = await supabase.from('players').select('*')
+      const [playersRes, statsRes] = await Promise.all([
+        supabase.from('players').select('*'),
+        supabase.from('user_stats').select('*')
+      ])
 
-      if (error) {
-        console.error('players 테이블 조회 실패:', error.message)
-      } else if (data) {
-        const formatted: PlayerCardType[] = data.map((item: any) => ({
-          id: item.id,
-          summoner: item.summoner_name || '무명의소환사',
-          ko: item.position_ko || '플레이어',
-          position: (item.position || 'MID') as Position,
-          tier: item.tier || 'Emerald',
-          lp: item.lp || 0,
-          overall: item.overall || 85,
-          rarity: (item.rarity || 'rare') as 'common' | 'rare' | 'epic' | 'legendary',
-          team: item.team || 'FA',
-          title: item.title || '새싹 소환사',
-          salaryCap: item.salary || 1000,
-          stats: {
-            kda: item.kda || 3.0,
-            winRate: item.win_rate || 50,
-            csm: item.csm || 6.5,
-            dpm: item.dpm || 600,
-            kp: item.kp || 60,
-          },
-        }))
+      if (playersRes.error) {
+        console.error('players 테이블 조회 실패:', playersRes.error.message)
+      }
+
+      // user_stats 데이터를 디스코드 ID(user_identifier)를 키로 하는 맵으로 변환
+      const statsMap = new Map()
+      if (statsRes.data) {
+        statsRes.data.forEach((stat: any) => {
+          statsMap.set(stat.user_identifier, stat)
+        })
+      }
+
+      if (playersRes.data) {
+        const formatted: PlayerCardType[] = playersRes.data.map((item: any) => {
+          const userStat = statsMap.get(item.id) || { wins: item.wins || 0, losses: item.losses || 0 }
+          const wins = userStat.wins ?? 0
+          const losses = userStat.losses ?? 0
+          const totalGames = wins + losses
+          const calculatedWinRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : (item.win_rate || 50)
+
+          return {
+            id: item.id,
+            summoner: item.summoner_name || '무명의소환사',
+            ko: item.position_ko || '플레이어',
+            position: (item.position || 'MID') as Position,
+            tier: item.tier || 'Emerald',
+            lp: item.lp || 0,
+            overall: item.overall || 85,
+            rarity: (item.rarity || 'rare') as 'common' | 'rare' | 'epic' | 'legendary',
+            team: item.team || 'FA',
+            title: item.title || '새싹 소환사',
+            salaryCap: item.salary || 1000,
+            stats: {
+              kda: item.kda || 3.0,
+              winRate: calculatedWinRate,
+              csm: item.csm || 6.5,
+              dpm: item.dpm || 600,
+              kp: item.kp || 60,
+            },
+            totalGames: totalGames,
+            wins: wins,
+            losses: losses,
+          }
+        })
         setPlayers(formatted)
       }
       setLoading(false)
@@ -131,7 +155,7 @@ export default function ShopPage() {
       {/* Cards grid */}
       {cards.length === 0 ? (
         <div className="rounded-2xl border border-border/70 bg-card p-12 text-center">
-          <p className="text-muted-foreground">Supabase `players` 테이블에 등록된 선수가 없습니다. 데이터를 채워보세요!</p>
+          <p className="text-muted-foreground">Supabase `players` 테이블에 등록된 선수가 없습니다. 디스코드 로그인을 완료해 보세요!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
