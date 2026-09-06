@@ -55,17 +55,7 @@ export async function GET(request: Request) {
     }, { onConflict: 'id' })
 
     // 2. players 테이블에도 자동으로 연동되도록 저장 (상점/로스터 카드용)
-    // await supabase.from('players').upsert({
-    //   id: discordUser.id,
-    //   summoner_name: username,
-    //   avatar_url: avatarUrl,
-    //   tier: 'Emerald',
-    //   position: 'MID',
-    //   rarity: 'rare',
-    //   overall: 85,
-    // }, { onConflict: 'id' })
-    // 2. players 테이블에도 자동으로 연동되도록 저장 (상점/로스터 카드용)
-    const { error: playerError } = await supabase.from('players').upsert({
+    await supabase.from('players').upsert({
       id: discordUser.id,
       summoner_name: username,
       avatar_url: avatarUrl,
@@ -75,9 +65,7 @@ export async function GET(request: Request) {
       overall: 85,
     }, { onConflict: 'id' })
 
-    if (playerError) {
-      console.error('players 테이블 저장 실패 에러:', playerError)
-    }
+
 
     const response = NextResponse.redirect(new URL('/', request.url))
     response.cookies.set('discord_user', JSON.stringify({
