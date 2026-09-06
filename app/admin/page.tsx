@@ -26,7 +26,7 @@ export default function AdminDashboard() {
     color: '#22d3ee'
   })
 
-  // 신규 선수 추가 폼 상태
+  // 신규 선수 추가 폼 상태 (주력 챔피언 배열 포함)
   const [newPlayer, setNewPlayer] = useState({
     summoner_name: '',
     position: 'MID',
@@ -35,7 +35,8 @@ export default function AdminDashboard() {
     rarity: 'rare',
     team: 'FA',
     salary: 1000,
-    title: '새싹 소환사'
+    title: '새싹 소환사',
+    favorite_champions: ['', '', '']
   })
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // 관리자 전용 선수 정보 수정 함수 예시
+  // 관리자 전용 선수 정보 수정 함수
   const handleUpdatePlayer = async (playerId: string, field: string, currentValue: any) => {
     const input = prompt(`선수의 새로운 ${field} 값을 입력하세요:`, String(currentValue))
     if (input === null) return
@@ -170,7 +171,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // ➕ 신규 선수 카드 추가 핸들러
+  // ➕ 신규 선수 카드 추가 핸들러 (주력 챔피언 포함)
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newPlayer.summoner_name) {
@@ -190,7 +191,8 @@ export default function AdminDashboard() {
       wins: 0,
       losses: 0,
       kda: 3.0,
-      win_rate: 50
+      win_rate: 50,
+      favorite_champions: newPlayer.favorite_champions.map(c => c.trim()).filter(Boolean)
     }
 
     const { error } = await supabase.from('players').insert([payload])
@@ -206,7 +208,8 @@ export default function AdminDashboard() {
         rarity: 'rare',
         team: 'FA',
         salary: 1000,
-        title: '새싹 소환사'
+        title: '새싹 소환사',
+        favorite_champions: ['', '', '']
       })
       fetchAdminData()
     }
