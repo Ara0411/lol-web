@@ -3,12 +3,11 @@ import React from 'react';
 import { NeonBadge } from './ui/neon-badge';
 
 interface PlayerCardProps {
-  player?: any; // 기존 샵 페이지 호환용
+  player?: any;
   name?: string;
   avatarUrl?: string;
   tier?: string;
   primaryPosition?: string;
-  subPosition?: string;
   winRate?: number;
   totalGames?: number;
   topChampions?: string[];
@@ -21,20 +20,25 @@ export function PlayerCard({
   avatarUrl,
   tier,
   primaryPosition,
-  subPosition,
   winRate,
   totalGames,
   topChampions,
   destructionScore,
 }: PlayerCardProps) {
-  // player 객체가 통째로 넘어온 경우 (기존 샵 페이지 호환) 데이터 추출
+  // Supabase user_stats 테이블 데이터가 stats 객체로 넘어올 때를 대비한 안전한 매핑
   const displayName = player?.summoner || name || '무명의소환사';
   const displayAvatar = player?.avatar_url || avatarUrl || '/placeholder-user.jpg';
   const displayTier = player?.tier || tier || 'Emerald';
   const displayPos = player?.position || primaryPosition || 'MID';
-  const displaySubPos = player?.subPosition || subPosition || 'SUP';
-  const displayWinRate = player?.stats?.winRate ?? winRate ?? 50;
-  const displayTotalGames = player?.totalGames ?? totalGames ?? 10;
+  
+  // Supabase에서 가져온 stats (wins, losses) 또는 기존 props 우선순위 반영
+  const resolvedWins = player?.stats?.wins ?? player?.wins ?? 0;
+  const resolvedLosses = player?.stats?.losses ?? player?.losses ?? 0;
+  const calculatedTotal = resolvedWins + resolvedLosses;
+  
+  const displayTotalGames = player?.totalGames ?? totalGames ?? calculatedTotal;
+  const displayWinRate = player?.winRate ?? winRate ?? (displayTotalGames > 0 ? Math.round((resolvedWins / displayTotalGames) * 100) : 50);
+  
   const displayChampions = player?.topChampions || topChampions || ['아리', '이즈리얼', '신짜오'];
 
   return (
@@ -58,13 +62,13 @@ export function PlayerCard({
           <div className="flex items-center gap-2 mt-1">
             <NeonBadge tone="cyan">{displayTier}</NeonBadge>
             <span className="text-xs text-muted-foreground">
-              주포: <strong className="text-foreground">{displayPos}</strong> | 부포: <strong className="text-muted-foreground">{displaySubPos}</strong>
+              포지션: <strong className="text-foreground">{displayPos}</strong>
             </span>
           </div>
         </div>
       </div>
 
-      {/* 전적 및 챔피언 정보 (승률 / 판수 / 주챔 3개) */}
+      {/* Supabase 실시간 연동된 전적 (승률 / 내전 판수) */}
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div className="bg-secondary/60 p-2 rounded-lg text-center">
           <div className="text-xs text-muted-foreground">승률</div>
@@ -76,20 +80,20 @@ export function PlayerCard({
         </div>
       </div>
 
-      {/* 주챔피언 3개 */}
-    <div className="mt-3">
+      {/* 주력 챔피언 3개 */}
+      <div className="mt-3">
         <div className="text-xs text-muted-foreground mb-1">주력 챔피언 (Top 3)</div>
-      <div className="flex gap-1.5">
+        <div className="flex gap-1.5">
           {(displayChampions || []).slice(0, 3).map((champ: string, index: number) => (
-          <span
-            key={index}
+            <span
+              key={index}
               className="flex-1 bg-secondary/80 text-center text-xs py-1 rounded text-foreground truncate px-1 border border-border/40"
-          >
-            {champ}
-          </span>
-        ))}
+            >
+              {champ}
+            </span>
+          ))}
+        </div>
       </div>
-    </div>
     </div>
   );
 }

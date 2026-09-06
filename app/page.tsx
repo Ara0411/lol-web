@@ -37,17 +37,17 @@ export default function HomePage() {
         <div className="relative flex flex-col gap-4 p-6 sm:p-10">
           <h1 className="max-w-4xl font-display text-3xl sm:text-5xl font-black uppercase tracking-tight whitespace-nowrap flex items-center gap-3">
             <span className="text-glow-cyan text-cyan">LoL-Eiter</span> 
-            <span>Inner League</span>
+            <span>League</span>
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            롤이터 커뮤니티 공식 이너 리그. 실시간 중계, 대진표, 선수 카드, 이적 시장까지
+            실시간 중계 · 대진표 · 선수 카드 · 이적 시장 리그의 모든 정보를 한눈에.
           </p>
           <div className="flex flex-wrap gap-3 pt-1">
             <Link
               href="/schedule"
               className="inline-flex items-center gap-2 rounded-lg bg-cyan px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-background transition-transform hover:-translate-y-0.5 neon-cyan-glow"
             >
-              <Trophy className="size-4" /> View Brackets
+              <Trophy className="size-4" /> 대진표
             </Link>
             <Link
               href="/shop"
@@ -80,7 +80,7 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF0000] px-3 py-2 text-xs font-bold text-white transition-transform hover:-translate-y-0.5"
             >
-              <Play className="size-3.5 fill-white" /> Watch on YouTube
+              <Play className="size-3.5 fill-white" /> 유튜브에서 보기
               <ExternalLink className="size-3.5" />
             </a>
           </div>
