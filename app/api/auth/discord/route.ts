@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       throw new Error('토큰 발급 실패')
     }
 
-    const userResponse = await fetch('https://discord.com/api/users/@me', {
+   const userResponse = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
 
@@ -44,6 +44,7 @@ export async function GET(request: Request) {
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : 'https://cdn.discordapp.com/embed/avatars/0.png'
 
+    // 💡 username 선언을 위쪽으로 올림
     const username = discordUser.global_name || discordUser.username
 
     // 1. users 테이블에 저장
@@ -64,8 +65,6 @@ export async function GET(request: Request) {
       rarity: 'rare',
       overall: 85,
     }, { onConflict: 'id' })
-
-
 
     const response = NextResponse.redirect(new URL('/', request.url))
     response.cookies.set('discord_user', JSON.stringify({
