@@ -25,9 +25,9 @@ const orbitron = Orbitron({
 })
 
 export const metadata: Metadata = {
-  title: 'LoL-Eiter League · 롤이터',
+  title: 'LoL-Iter League · 롤이터',
   description:
-    'LoL-Eiter — the inner-league community for League of Legends. Live streams, brackets, player cards, transfer market, scrims and more.',
+    'LoL-Iter — the inner-league community for League of Legends. Live streams, brackets, player cards, transfer market, scrims and more.',
   generator: 'v0.app',
 }
 
@@ -53,7 +53,7 @@ export default function RootLayout({
         </main>
         <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
           <p>
-            LoL-Eiter League · 롤이터 — Community inner-league. Not affiliated with Riot Games.
+            LoL-Iter League · 롤이터 — Community inner-league. Not affiliated with Riot Games.
           </p>
         </footer>
         {process.env.NODE_ENV === 'production' && <Analytics />}
