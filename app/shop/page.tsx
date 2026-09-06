@@ -114,7 +114,7 @@ export default function ShopPage() {
           title="선수 카드 및 상점"
           subtitle="FIFA 스타일 선수 카드를 수집하고, 팀/인게임 포인트로 프레임과 배경을 커스터마이징하세요."
         />
-        <GlassCard className="flex items-center gap-3 self-start px-4 py-3 sm:self-auto">
+        {/* <GlassCard className="flex items-center gap-3 self-start px-4 py-3 sm:self-auto">
           <span className="grid size-9 place-items-center rounded-lg bg-gold/15">
             <Coins className="size-4 text-gold" />
           </span>
@@ -126,7 +126,7 @@ export default function ShopPage() {
               {balance.toLocaleString()} P
             </p>
           </div>
-        </GlassCard>
+        </GlassCard> */}
       </div>
 
       {/* Position filter */}

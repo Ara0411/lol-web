@@ -36,7 +36,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-tr from-background via-background/70 to-transparent" />
         <div className="relative flex flex-col gap-4 p-6 sm:p-10">
           <h1 className="max-w-4xl font-display text-3xl sm:text-5xl font-black uppercase tracking-tight whitespace-nowrap flex items-center gap-3">
-            <span className="text-glow-cyan text-cyan">LoL-Eiter</span> 
+            <span className="text-glow-cyan text-cyan">LoLIter</span> 
             <span>League</span>
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -193,9 +193,7 @@ export default function HomePage() {
               <TeamLogo name={team.name} size={40} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{team.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  포인트: <span className="text-cyan font-bold">{team.points.toLocaleString()}</span> pts
-                </p>
+                
               </div>
             </div>
           ))}

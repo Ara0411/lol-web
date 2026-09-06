@@ -128,7 +128,7 @@ export function SiteHeader() {
           </span>
           <span className="leading-none">
             <span className="block font-display text-base font-extrabold uppercase tracking-tight text-glow-cyan">
-              LoL-Eiter
+              LoLIter
             </span>
             <span className="block text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
               League · 롤이터
