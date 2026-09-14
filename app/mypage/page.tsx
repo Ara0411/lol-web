@@ -13,6 +13,17 @@ interface DiscordUser {
   avatar: string
 }
 
+// 폼 상태 전용 인터페이스 정의 (TypeScript 형식 오류 방지)
+interface FormDataState {
+  summoner_name: string
+  position: string
+  tier: string
+  avatar_url: string
+  title: string
+  destruction_score: string | number // 💡 문자열과 소수점 숫자 모두 허용
+  favorite_champions: string[]
+}
+
 const POPULAR_CHAMPIONS = [
   "가렌", "갈리오", "갱플랭크", "그라가스", "그레이브즈", "그웬", "나르", "나미", "나서스", "나피리",
   "노틸러스", "녹턴", "누누와 윌럼프", "니달리", "니코", "닐라", "다리우스", "다이애나", "드레이븐", "라이즈",
@@ -39,13 +50,14 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const [formData, setFormData] = useState({
+  // 제네릭으로 FormDataState 지정
+  const [formData, setFormData] = useState<FormDataState>({
     summoner_name: '',
     position: 'MID',
     tier: 'Emerald',
     avatar_url: '',
     title: '새싹 소환사',
-    destruction_score: 85, // 👈 멸망전 점수(OVR) 기본값
+    destruction_score: '85',
     favorite_champions: ['', '', ''],
   })
 
@@ -86,7 +98,7 @@ export default function MyPage() {
         tier: data.tier || 'Emerald',
         avatar_url: data.avatar_url || '',
         title: data.title || '새싹 소환사',
-        destruction_score: data.destruction_score ?? data.overall ?? 85, // 👈 DB 점수 불러오기
+        destruction_score: String(data.destruction_score ?? data.overall ?? 85),
         favorite_champions: champs.slice(0, 3),
       })
     }
@@ -109,6 +121,8 @@ export default function MyPage() {
 
     setSaving(true)
 
+    const parsedScore = parseFloat(String(formData.destruction_score)) || 0
+
     const payload = {
       id: user.id,
       summoner_name: formData.summoner_name,
@@ -116,8 +130,8 @@ export default function MyPage() {
       tier: formData.tier,
       avatar_url: formData.avatar_url.trim() || null,
       title: formData.title,
-      overall: Number(formData.destruction_score), // 기존 overall 컬럼 호환
-      destruction_score: parseFloat(String(formData.destruction_score)) || 0,
+      overall: Math.round(parsedScore), // 기존 overall 정수형 컬럼 안전 호환
+      destruction_score: parsedScore,   // 💡 소수점 점수 저장
       favorite_champions: formData.favorite_champions.map((c) => c.trim()).filter(Boolean),
     }
 
@@ -246,18 +260,21 @@ export default function MyPage() {
               </label>
               <input
                 type="number"
-                step="0.1"
+                step="any"
                 min="0"
                 max="999"
-                placeholder="예: 85"
+                placeholder="예: 85 / 20.5"
                 value={formData.destruction_score}
                 onChange={(e) =>
-                  setFormData({ ...formData, destruction_score: parseInt(e.target.value, 10) || 0 })
+                  setFormData({
+                    ...formData,
+                    destruction_score: e.target.value, // 💡 문자열 그대로 유지하여 소수점(.) 입력 지원
+                  })
                 }
                 className="w-full rounded-lg border border-amber-500/40 bg-background px-3.5 py-2.5 text-xs font-bold text-amber-400 focus:border-amber-400 focus:outline-none"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
-                * 카드 우측 상단에 뱃지로 표시될 본인의 멸망전 기준 점수입니다.
+                * 카드 우측 상단에 뱃지로 표시될 본인의 멸망전 기준 점수입니다. (소수점 지원)
               </p>
             </div>
           </div>
