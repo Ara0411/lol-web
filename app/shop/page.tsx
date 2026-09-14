@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Coins, IdCard, Sparkles, Check, Lock } from 'lucide-react'
 import { GlassCard } from '@/components/ui/glass-card'
-import { NeonBadge } from '@/components/ui/neon-badge'
 import { PlayerCard } from '@/components/player-card'
 import { PageTitle } from '@/components/page-title'
 import { SHOP_ITEMS, POSITION_META, type Position, type PlayerCard as PlayerCardType } from '@/lib/data'
@@ -11,13 +10,6 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 const FILTERS: (Position | 'ALL')[] = ['ALL', 'TOP', 'JG', 'MID', 'ADC', 'SUP']
-
-const RARITY_TONE = {
-  common: 'muted',
-  rare: 'cyan',
-  epic: 'purple',
-  legendary: 'gold',
-} as const
 
 export default function ShopPage() {
   const [filter, setFilter] = useState<Position | 'ALL'>('ALL')
@@ -27,19 +19,19 @@ export default function ShopPage() {
   const [players, setPlayers] = useState<PlayerCardType[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 🚀 Supabase의 players 테이블과 user_stats 테이블을 동시에 긁어와서 결합하기
+  // 🚀 Supabase의 players 테이블과 user_stats 테이블 연동
   useEffect(() => {
     const fetchPlayers = async () => {
       const [playersRes, statsRes] = await Promise.all([
         supabase.from('players').select('*'),
-        supabase.from('user_stats').select('*')
+        supabase.from('user_stats').select('*'),
       ])
 
       if (playersRes.error) {
         console.error('players 테이블 조회 실패:', playersRes.error.message)
       }
 
-      // user_stats 데이터를 디스코드 ID(user_identifier)를 키로 하는 맵으로 변환
+      // user_stats 데이터를 디스코드 ID(user_identifier) 기준 Map으로 변환
       const statsMap = new Map()
       if (statsRes.data) {
         statsRes.data.forEach((stat: any) => {
@@ -53,17 +45,23 @@ export default function ShopPage() {
           const wins = userStat.wins ?? 0
           const losses = userStat.losses ?? 0
           const totalGames = wins + losses
-          const calculatedWinRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : (item.win_rate || 50)
+          const calculatedWinRate =
+            totalGames > 0 ? Math.round((wins / totalGames) * 100) : (item.win_rate || 50)
+
+          // 💡 반올림하지 않고 사용자가 기입한 소수점 점수(85.5 등) 그대로 유지
+          const rawScore = item.destruction_score ?? item.overall ?? 85
+          const scoreValue = Number(rawScore)
 
           return {
             id: item.id,
             summoner: item.summoner_name || '무명의소환사',
-            avatar_url: item.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png', // 👈 이 부분을 추가해야 아바타가 전달됩니다!
+            avatar_url: item.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png',
             ko: item.position_ko || '플레이어',
             position: (item.position || 'MID') as Position,
             tier: item.tier || 'Emerald',
             lp: item.lp || 0,
-            overall: item.overall || 85,
+            overall: scoreValue,
+            destruction_score: scoreValue, // 👈 소수점 점수 원본 전달
             rarity: (item.rarity || 'rare') as 'common' | 'rare' | 'epic' | 'legendary',
             team: item.team || 'FA',
             title: item.title || '새싹 소환사',
@@ -78,7 +76,7 @@ export default function ShopPage() {
             totalGames: totalGames,
             wins: wins,
             losses: losses,
-            favorite_champions: item.favorite_champions || [],
+            favorite_champions: item.favorite_champions || [], // 👈 마이페이지 설정 챔피언 전달
           }
         })
         setPlayers(formatted)
@@ -114,19 +112,6 @@ export default function ShopPage() {
           title="선수 카드 및 상점"
           subtitle="FIFA 스타일 선수 카드를 수집하고, 팀/인게임 포인트로 프레임과 배경을 커스터마이징하세요."
         />
-        {/* <GlassCard className="flex items-center gap-3 self-start px-4 py-3 sm:self-auto">
-          <span className="grid size-9 place-items-center rounded-lg bg-gold/15">
-            <Coins className="size-4 text-gold" />
-          </span>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              보유 포인트 (Balance)
-            </p>
-            <p className="font-display text-lg font-black text-gold tabular-nums">
-              {balance.toLocaleString()} P
-            </p>
-          </div>
-        </GlassCard> */}
       </div>
 
       {/* Position filter */}
@@ -157,7 +142,7 @@ export default function ShopPage() {
       {/* Cards grid */}
       {cards.length === 0 ? (
         <div className="rounded-2xl border border-border/70 bg-card p-12 text-center">
-          <p className="text-muted-foreground">Supabase `players` 테이블에 등록된 선수가 없습니다. 디스코드 로그인을 완료해 보세요!</p>
+          <p className="text-muted-foreground">Supabase players 테이블에 등록된 선수가 없습니다. 디스코드 로그인을 완료해 보세요!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -166,74 +151,6 @@ export default function ShopPage() {
           ))}
         </div>
       )}
-
-      {/* Customization Shop
-      <div>
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="size-4 text-purple" />
-          <h2 className="font-display text-sm font-bold uppercase tracking-wide">
-            카드 커스텀 상점 (Customization Shop)
-          </h2>
-          <span className="text-xs text-muted-foreground">프레임 · 보더 · 애니메이션 배경</span>
-        </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {SHOP_ITEMS.map((item) => {
-            const isOwned = owned.includes(item.id)
-            const affordable = balance >= item.price
-            return (
-              <GlassCard key={item.id} hover className="overflow-hidden">
-                <div
-                  className="relative flex h-32 items-center justify-center"
-                  style={{ background: item.preview }}
-                >
-                  <div className="absolute inset-0 grid-bg opacity-30" />
-                  <div className="relative flex size-16 items-center justify-center rounded-xl border border-white/20 bg-black/30 backdrop-blur">
-                    <IdCard className="size-7 text-white/80" />
-                  </div>
-                  <div className="absolute left-3 top-3">
-                    <NeonBadge tone={RARITY_TONE[item.rarity]}>{item.rarity}</NeonBadge>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="font-display text-sm font-bold">{item.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {item.ko} · {item.type}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="flex items-center gap-1 font-display text-sm font-bold text-gold">
-                      <Coins className="size-3.5" /> {item.price.toLocaleString()} P
-                    </span>
-                    <button
-                      onClick={() => buy(item.id, item.price)}
-                      disabled={isOwned || !affordable}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all',
-                        isOwned
-                          ? 'cursor-default border border-success/40 bg-success/10 text-success'
-                          : affordable
-                            ? 'bg-purple text-white hover:-translate-y-0.5 neon-purple-glow'
-                            : 'cursor-not-allowed border border-border bg-white/5 text-muted-foreground',
-                      )}
-                    >
-                      {isOwned ? (
-                        <>
-                          <Check className="size-3.5" /> 보유 중
-                        </>
-                      ) : affordable ? (
-                        '구매하기'
-                      ) : (
-                        <>
-                          <Lock className="size-3.5" /> 포인트 부족
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </GlassCard>
-            )
-          })}
-        </div>
-      </div> */}
     </div>
   )
 }

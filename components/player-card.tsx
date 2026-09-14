@@ -11,7 +11,7 @@ interface PlayerCardProps {
   winRate?: number
   totalGames?: number
   topChampions?: string[]
-  destructionScore?: number // 멸망전 점수 (소수점 허용)
+  destructionScore?: number | string
 }
 
 function getTierTone(tier: string = ''): 'gold' | 'purple' | 'cyan' | 'danger' | 'muted' | 'success' {
@@ -35,13 +35,17 @@ export function PlayerCard({
   topChampions,
   destructionScore,
 }: PlayerCardProps) {
-  const displayName = player?.summoner_name || player?.summoner || name || '무명의소환사'
+  const displayName = player?.summoner || player?.summoner_name || name || '무명의소환사'
   const displayAvatar = player?.avatar_url || avatarUrl || '/placeholder-user.jpg'
   const displayTier = player?.tier || tier || 'Emerald'
   const displayPos = player?.position || primaryPosition || 'MID'
 
-  // 💡 멸망전 점수: 정수 및 소수점(예: 85.5)을 그대로 안전하게 숫자로 변환
-  const rawScore = player?.destruction_score ?? player?.overall ?? destructionScore ?? 0
+  // 💡 반올림하지 않고 입력한 값(85.5 등)을 그대로 출력
+  const rawScore =
+    player?.destruction_score ??
+    destructionScore ??
+    player?.overall ??
+    85
   const displayScore = Number(rawScore)
 
   const resolvedWins = player?.stats?.wins ?? player?.wins ?? 0
@@ -50,6 +54,7 @@ export function PlayerCard({
 
   const displayTotalGames = player?.totalGames ?? totalGames ?? calculatedTotal
   const displayWinRate =
+    player?.stats?.winRate ??
     player?.winRate ??
     winRate ??
     (displayTotalGames > 0 ? Math.round((resolvedWins / displayTotalGames) * 100) : 50)
@@ -59,7 +64,7 @@ export function PlayerCard({
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card/80 p-4 backdrop-blur-md transition-all hover:border-cyan/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]">
-      {/* 우측 상단 OVR 스타일 멸망전 점수 배지 */}
+      {/* 우측 상단 멸망전 점수 뱃지 (입력한 값 그대로 노출) */}
       <div className="absolute top-3 right-3 flex flex-col items-end z-10">
         <div className="flex items-baseline gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500/80">점수</span>
@@ -67,7 +72,7 @@ export function PlayerCard({
         </div>
       </div>
 
-      {/* 상단 프로필 및 티어 정보 (pr-16으로 우측 점수 배지와 닉네임 겹침 방지) */}
+      {/* 상단 프로필 및 티어 정보 */}
       <div className="flex items-center gap-3 border-b border-border pb-3.5 pr-16">
         <img
           src={displayAvatar}
@@ -77,7 +82,6 @@ export function PlayerCard({
         <div className="flex-1 min-w-0">
           <h4 className="font-bold text-foreground text-base truncate">{displayName}</h4>
           <div className="flex items-center gap-1.5 mt-1">
-            {/* 티어별 동적 네온 컬러 적용 */}
             <NeonBadge tone={getTierTone(displayTier)}>{displayTier}</NeonBadge>
             <span className="text-[11px] text-muted-foreground">
               포지션: <strong className="text-foreground">{displayPos}</strong>
