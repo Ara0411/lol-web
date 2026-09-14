@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trophy, Save, Award, Image as ImageIcon, Swords } from 'lucide-react'
+import { Trophy, Save, Award, Image as ImageIcon, Swords, Flame } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { PageTitle } from '@/components/page-title'
 import { GlassCard } from '@/components/ui/glass-card'
@@ -13,7 +13,6 @@ interface DiscordUser {
   avatar: string
 }
 
-// 자주 쓰이는 주요 챔피언 목록 (필요에 따라 추가/수정 가능)
 const POPULAR_CHAMPIONS = [
   "가렌", "갈리오", "갱플랭크", "그라가스", "그레이브즈", "그웬", "나르", "나미", "나서스", "나피리",
   "노틸러스", "녹턴", "누누와 윌럼프", "니달리", "니코", "닐라", "다리우스", "다이애나", "드레이븐", "라이즈",
@@ -44,15 +43,16 @@ export default function MyPage() {
     summoner_name: '',
     position: 'MID',
     tier: 'Emerald',
-    avatar_url: '', 
+    avatar_url: '',
     title: '새싹 소환사',
-    favorite_champions: ['', '', ''], // 3개 칸
+    destruction_score: 85, // 👈 멸망전 점수(OVR) 기본값
+    favorite_champions: ['', '', ''],
   })
 
   useEffect(() => {
     const cookies = document.cookie.split(';')
     const userCookie = cookies.find((c) => c.trim().startsWith('discord_user='))
-    
+
     if (!userCookie) {
       alert('로그인이 필요한 페이지입니다!')
       router.push('/')
@@ -86,6 +86,7 @@ export default function MyPage() {
         tier: data.tier || 'Emerald',
         avatar_url: data.avatar_url || '',
         title: data.title || '새싹 소환사',
+        destruction_score: data.destruction_score ?? data.overall ?? 85, // 👈 DB 점수 불러오기
         favorite_champions: champs.slice(0, 3),
       })
     }
@@ -115,7 +116,9 @@ export default function MyPage() {
       tier: formData.tier,
       avatar_url: formData.avatar_url.trim() || null,
       title: formData.title,
-      favorite_champions: formData.favorite_champions.map(c => c.trim()).filter(Boolean),
+      overall: Number(formData.destruction_score), // 기존 overall 컬럼 호환
+      destruction_score: Number(formData.destruction_score), // 👈 멸망전 점수 저장
+      favorite_champions: formData.favorite_champions.map((c) => c.trim()).filter(Boolean),
     }
 
     const { error } = await supabase.from('players').upsert([payload], { onConflict: 'id' })
@@ -145,7 +148,7 @@ export default function MyPage() {
       <PageTitle
         overline="Account Settings"
         title="My Profile & Player Info"
-        subtitle="디스코드 계정과 연동된 리그 선수 정보를 관리하고 주력 챔피언을 선택하세요."
+        subtitle="디스코드 계정과 연동된 리그 선수 정보를 관리하고 주력 챔피언과 멸망전 점수를 설정하세요."
       />
 
       <GlassCard className="p-6 flex items-center gap-4 border-cyan/30 bg-cyan/5">
@@ -214,6 +217,7 @@ export default function MyPage() {
             />
           </div>
 
+          {/* 티어 및 멸망전 점수(OVR) 기입 섹션 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">
@@ -238,18 +242,38 @@ export default function MyPage() {
 
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase flex items-center gap-1.5">
-                <Award className="size-3.5 text-gold opacity-50" /> 대표 칭호 (준비 중 / 잠김)
+                <Flame className="size-3.5 text-amber-500" /> 멸망전 점수 (OVR)
               </label>
               <input
-                type="text"
-                disabled
-                value="새싹 소환사 (임시 잠금)"
-                className="w-full rounded-lg border border-border bg-background/50 px-3.5 py-2.5 text-xs text-muted-foreground cursor-not-allowed"
+                type="number"
+                min="0"
+                max="999"
+                placeholder="예: 85"
+                value={formData.destruction_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, destruction_score: parseInt(e.target.value, 10) || 0 })
+                }
+                className="w-full rounded-lg border border-amber-500/40 bg-background px-3.5 py-2.5 text-xs font-bold text-amber-400 focus:border-amber-400 focus:outline-none"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                * 카드 우측 상단에 뱃지로 표시될 본인의 멸망전 기준 점수입니다.
+              </p>
             </div>
           </div>
 
-          {/* 🌟 주력 챔피언 3개 드롭다운 선택 섹션 */}
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase flex items-center gap-1.5">
+              <Award className="size-3.5 text-gold opacity-50" /> 대표 칭호 (준비 중 / 잠김)
+            </label>
+            <input
+              type="text"
+              disabled
+              value="새싹 소환사 (임시 잠금)"
+              className="w-full rounded-lg border border-border bg-background/50 px-3.5 py-2.5 text-xs text-muted-foreground cursor-not-allowed"
+            />
+          </div>
+
+          {/* 주력 챔피언 3개 드롭다운 선택 섹션 */}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase flex items-center gap-1.5">
               <Swords className="size-3.5 text-purple" /> 주력 챔피언 3가지 선택

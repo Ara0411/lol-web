@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       throw new Error('토큰 발급 실패')
     }
 
-   const userResponse = await fetch('https://discord.com/api/users/@me', {
+    const userResponse = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
 
@@ -44,10 +44,9 @@ export async function GET(request: Request) {
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : 'https://cdn.discordapp.com/embed/avatars/0.png'
 
-    // 💡 username 선언을 위쪽으로 올림
     const username = discordUser.global_name || discordUser.username
 
-    // 1. users 테이블에 저장
+    // 1. users 테이블 저장 (닉네임/아바타 최신화)
     await supabase.from('users').upsert({
       id: discordUser.id,
       username: username,
@@ -55,16 +54,36 @@ export async function GET(request: Request) {
       tier: '언랭크',
     }, { onConflict: 'id' })
 
-    // 2. players 테이블에도 자동으로 연동되도록 저장 (상점/로스터 카드용)
-    await supabase.from('players').upsert({
-      id: discordUser.id,
-      summoner_name: username,
-      avatar_url: avatarUrl,
-      tier: 'Emerald',
-      position: 'MID',
-      rarity: 'rare',
-      overall: 85,
-    }, { onConflict: 'id' })
+    // 2. players 테이블 기존 등록 여부 확인
+    const { data: existingPlayer } = await supabase
+      .from('players')
+      .select('id')
+      .eq('id', discordUser.id)
+      .maybeSingle()
+
+    if (!existingPlayer) {
+      // 💡 최초 로그인 시에만 기본 카드 생성
+      await supabase.from('players').insert([
+        {
+          id: discordUser.id,
+          summoner_name: username,
+          avatar_url: avatarUrl,
+          tier: 'Emerald',
+          position: 'MID',
+          rarity: 'rare',
+          overall: 85,
+          destruction_score: 85, // 멸망전 점수 기본값
+        }
+      ])
+    } else {
+      // 💡 기존 카드가 이미 있다면 유저가 수정한 티어/포지션/점수는 보존하고 아바타만 최신화
+      await supabase
+        .from('players')
+        .update({
+          avatar_url: avatarUrl,
+        })
+        .eq('id', discordUser.id)
+    }
 
     const response = NextResponse.redirect(new URL('/', request.url))
     response.cookies.set('discord_user', JSON.stringify({
