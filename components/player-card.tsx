@@ -61,7 +61,6 @@ export function PlayerCard({
       {/* 우측 상단 OVR 스타일 멸망전 점수 배지 */}
       <div className="absolute top-3 right-3 flex flex-col items-end">
         <div className="flex items-baseline gap-0.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-0.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500/80">점수</span>
           <span className="font-mono text-base font-black text-amber-400">{score}</span>
         </div>
       </div>
