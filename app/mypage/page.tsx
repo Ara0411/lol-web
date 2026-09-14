@@ -117,7 +117,7 @@ export default function MyPage() {
       avatar_url: formData.avatar_url.trim() || null,
       title: formData.title,
       overall: Number(formData.destruction_score), // 기존 overall 컬럼 호환
-      destruction_score: Number(formData.destruction_score), // 👈 멸망전 점수 저장
+      destruction_score: parseFloat(String(formData.destruction_score)) || 0,
       favorite_champions: formData.favorite_champions.map((c) => c.trim()).filter(Boolean),
     }
 
@@ -246,6 +246,7 @@ export default function MyPage() {
               </label>
               <input
                 type="number"
+                step="0.1"
                 min="0"
                 max="999"
                 placeholder="예: 85"
