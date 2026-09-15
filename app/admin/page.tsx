@@ -77,6 +77,7 @@ export default function AdminDashboard() {
         id: newTeam.id.trim(),
         name: newTeam.name.trim(),
         short: newTeam.short.trim().toUpperCase(),
+        color: '#22d3ee',
       },
     ])
 
