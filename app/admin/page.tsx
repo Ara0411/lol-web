@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShieldAlert, Coins, Swords, Users, Save, UserPlus, Trash2, PlusCircle, Building2 } from 'lucide-react'
+import {
+  ShieldAlert,
+  Coins,
+  Swords,
+  Users,
+  Save,
+  UserPlus,
+  Trash2,
+  PlusCircle,
+  Building2,
+  Shield,
+  UserCheck,
+} from 'lucide-react'
 import { useAdmin } from '@/lib/use-admin'
 import { supabase } from '@/lib/supabase'
 import { PageTitle } from '@/components/page-title'
@@ -11,7 +23,7 @@ import { GlassCard } from '@/components/ui/glass-card'
 export default function AdminDashboard() {
   const router = useRouter()
   const { isAdmin, loading: adminLoading } = useAdmin()
-  
+
   const [teams, setTeams] = useState<any[]>([])
   const [matches, setMatches] = useState<any[]>([])
   const [players, setPlayers] = useState<any[]>([])
@@ -23,10 +35,10 @@ export default function AdminDashboard() {
     name: '',
     short: '',
     points: 15400,
-    color: '#22d3ee'
+    color: '#22d3ee',
   })
 
-  // 신규 선수 추가 폼 상태 (주력 챔피언 배열 포함)
+  // 신규 선수 추가 폼 상태 (주력 챔피언 및 후보 여부 포함)
   const [newPlayer, setNewPlayer] = useState({
     summoner_name: '',
     position: 'MID',
@@ -36,7 +48,8 @@ export default function AdminDashboard() {
     team: 'FA',
     salary: 1000,
     title: '새싹 소환사',
-    favorite_champions: ['', '', '']
+    is_substitute: false,
+    favorite_champions: ['', '', ''],
   })
 
   useEffect(() => {
@@ -56,7 +69,7 @@ export default function AdminDashboard() {
     const [teamsRes, matchesRes, playersRes] = await Promise.all([
       supabase.from('teams').select('*').order('points', { ascending: false }),
       supabase.from('matches').select('*').order('id', { ascending: true }),
-      supabase.from('players').select('*').order('overall', { ascending: false })
+      supabase.from('players').select('*').order('overall', { ascending: false }),
     ])
     if (teamsRes.data) setTeams(teamsRes.data)
     if (matchesRes.data) setMatches(matchesRes.data)
@@ -81,7 +94,7 @@ export default function AdminDashboard() {
         name: '',
         short: '',
         points: 15400,
-        color: '#22d3ee'
+        color: '#22d3ee',
       })
       fetchAdminData()
     }
@@ -89,7 +102,12 @@ export default function AdminDashboard() {
 
   // 🗑️ 팀 삭제 핸들러
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
-    if (!confirm(`정말 "${teamName}" 팀을 삭제하시겠습니까? 소속 선수들의 팀 정보가 꼬일 수 있으니 주의하세요!`)) return
+    if (
+      !confirm(
+        `정말 "${teamName}" 팀을 삭제하시겠습니까? 소속 선수들의 팀 정보가 꼬일 수 있으니 주의하세요!`,
+      )
+    )
+      return
 
     const { error } = await supabase.from('teams').delete().eq('id', teamId)
     if (error) {
@@ -105,7 +123,7 @@ export default function AdminDashboard() {
     const input = prompt('수정할 팀 포인트를 입력하세요:', String(currentPoints))
     if (input === null) return
     const newPoints = parseInt(input, 10)
-    
+
     if (!isNaN(newPoints)) {
       const { error } = await supabase.from('teams').update({ points: newPoints }).eq('id', teamId)
       if (error) alert('포인트 업데이트 실패: ' + error.message)
@@ -116,6 +134,42 @@ export default function AdminDashboard() {
     }
   }
 
+  // 🔄 선수의 소속 팀 변경 (셀렉트 박스로 즉시 변경)
+  const handleChangePlayerTeam = async (playerId: string, teamName: string) => {
+    const { error } = await supabase.from('players').update({ team: teamName }).eq('id', playerId)
+
+    if (error) {
+      alert('팀 배정 실패: ' + error.message)
+    } else {
+      fetchAdminData()
+    }
+  }
+
+  // 🔄 선수의 포지션 변경
+  const handleChangePlayerPosition = async (playerId: string, position: string) => {
+    const { error } = await supabase.from('players').update({ position }).eq('id', playerId)
+
+    if (error) {
+      alert('포지션 변경 실패: ' + error.message)
+    } else {
+      fetchAdminData()
+    }
+  }
+
+  // 🔄 선수의 주전 / 후보 (식스맨) 토글 전환
+  const handleToggleSubstitute = async (playerId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('players')
+      .update({ is_substitute: !currentStatus })
+      .eq('id', playerId)
+
+    if (error) {
+      alert('로스터 상태 변경 실패: ' + error.message)
+    } else {
+      fetchAdminData()
+    }
+  }
+
   // 💾 매치 정보 수정 (팀 이름, 점수, 상태 통합 제어)
   const handleUpdateMatch = async (matchId: number, field: string, currentValue: any) => {
     const fieldLabels: Record<string, string> = {
@@ -123,17 +177,17 @@ export default function AdminDashboard() {
       team2: '팀2 이름',
       score1: '팀1 점수',
       score2: '팀2 점수',
-      status: '경기 상태'
+      status: '경기 상태',
     }
 
     const input = prompt(`새로운 ${fieldLabels[field] || field} 값을 입력하세요:`, String(currentValue))
     if (input === null) return
-    
+
     let updateData = {}
     if (field === 'status') {
       const upperStatus = input.toUpperCase()
       if (!['UPCOMING', 'LIVE', 'FINISHED'].includes(upperStatus)) {
-        return alert("상태는 UPCOMING(예정), LIVE(진행 중), FINISHED(종료) 중 하나여야 합니다.")
+        return alert('상태는 UPCOMING(예정), LIVE(진행 중), FINISHED(종료) 중 하나여야 합니다.')
       }
       updateData = { status: upperStatus }
     } else if (field === 'team1' || field === 'team2') {
@@ -171,7 +225,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // ➕ 신규 선수 카드 추가 핸들러 (주력 챔피언 포함)
+  // ➕ 신규 선수 카드 추가 핸들러
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newPlayer.summoner_name) {
@@ -188,11 +242,12 @@ export default function AdminDashboard() {
       team: newPlayer.team,
       salary: Number(newPlayer.salary),
       title: newPlayer.title,
+      is_substitute: newPlayer.is_substitute,
       wins: 0,
       losses: 0,
       kda: 3.0,
       win_rate: 50,
-      favorite_champions: newPlayer.favorite_champions.map(c => c.trim()).filter(Boolean)
+      favorite_champions: newPlayer.favorite_champions.map((c) => c.trim()).filter(Boolean),
     }
 
     const { error } = await supabase.from('players').insert([payload])
@@ -209,7 +264,8 @@ export default function AdminDashboard() {
         team: 'FA',
         salary: 1000,
         title: '새싹 소환사',
-        favorite_champions: ['', '', '']
+        is_substitute: false,
+        favorite_champions: ['', '', ''],
       })
       fetchAdminData()
     }
@@ -245,7 +301,7 @@ export default function AdminDashboard() {
       <PageTitle
         overline="ADMIN MASTER"
         title="리그 관리자 대시보드"
-        subtitle="롤이터 리그의 팀 관리, 포인트, 경기 스코어, 선수 카드 등록 및 스탯을 실시간으로 제어할 수 있는 마스터 패널입니다."
+        subtitle="롤이터 리그의 팀 관리, 포인트, 경기 스코어, 선수 카드 등록 및 로스터 배정을 실시간으로 제어할 수 있는 마스터 패널입니다."
       />
 
       {/* 1. 팀 관리 및 생성 패널 */}
@@ -318,11 +374,13 @@ export default function AdminDashboard() {
           {teams.map((team) => (
             <GlassCard key={team.id} className="p-4 border-cyan/20 bg-cyan/5 flex items-center justify-between">
               <div>
-                <p className="font-bold text-lg">{team.name} <span className="text-xs text-muted-foreground">({team.short})</span></p>
+                <p className="font-bold text-lg">
+                  {team.name} <span className="text-xs text-muted-foreground">({team.short})</span>
+                </p>
                 <p className="text-sm text-gold font-semibold">{team.points.toLocaleString()} 포인트</p>
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => handleUpdateTeamPoint(team.id, team.points)}
                   className="rounded bg-white/10 px-2.5 py-1 text-xs font-bold hover:bg-white/20"
                 >
@@ -341,33 +399,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 2. 팀 포인트 제어 패널 */}
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <Coins className="size-5 text-gold" />
-          <h2 className="font-display text-lg font-bold uppercase tracking-wide text-gold">
-            팀 포인트 현황 관리
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {teams.map((team) => (
-            <GlassCard key={team.id} className="p-4 flex items-center justify-between border-gold/20 bg-gold/5">
-              <div>
-                <p className="font-bold text-lg">{team.name}</p>
-                <p className="text-sm text-muted-foreground">{team.points.toLocaleString()} 포인트</p>
-              </div>
-              <button 
-                onClick={() => handleUpdateTeamPoint(team.id, team.points)}
-                className="flex items-center gap-1 rounded bg-gold/20 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-black transition-all"
-              >
-                <Save className="size-3" /> 수정
-              </button>
-            </GlassCard>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. 대진표 및 경기 스코어 제어 패널 */}
+      {/* 2. 대진표 및 경기 스코어 제어 패널 */}
       <section>
         <div className="mb-4 flex items-center gap-2">
           <Swords className="size-5 text-cyan-400" />
@@ -390,31 +422,31 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button 
+                  <button
                     onClick={() => handleUpdateMatch(match.id, 'team1', match.team1)}
                     className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
                   >
                     팀1 변경
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleUpdateMatch(match.id, 'team2', match.team2)}
                     className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
                   >
                     팀2 변경
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleUpdateMatch(match.id, 'score1', match.score1 ?? 0)}
                     className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
                   >
                     팀1 점수
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleUpdateMatch(match.id, 'score2', match.score2 ?? 0)}
                     className="rounded bg-white/10 px-3 py-1 text-xs font-bold hover:bg-white/20"
                   >
                     팀2 점수
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleUpdateMatch(match.id, 'status', match.status)}
                     className="rounded border border-cyan/50 bg-cyan/10 px-3 py-1 text-xs font-bold text-cyan-400 hover:bg-cyan hover:text-black"
                   >
@@ -427,16 +459,16 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 4. 선수 카드 추가 & 관리 패널 */}
+      {/* 3. 선수 카드 관리 & 팀 로스터 배정 패널 */}
       <section className="space-y-6">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-purple-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-purple-400">
-            선수 카드 관리 및 생성
+            선수 목록 & 팀 로스터 실시간 배정
           </h2>
         </div>
 
-        {/* 신규 선수 등록 폼 */}
+        {/* 신규 등록 폼 */}
         <GlassCard className="p-6 border-purple/30 bg-purple/5">
           <h3 className="text-sm font-bold text-purple-300 mb-4 flex items-center gap-2">
             <UserPlus className="size-4" /> 신규 선수 카드 수동 등록
@@ -500,12 +532,18 @@ export default function AdminDashboard() {
             </div>
             <div>
               <label className="block text-[11px] font-bold text-muted-foreground mb-1">소속 팀 (또는 FA)</label>
-              <input
-                type="text"
+              <select
                 value={newPlayer.team}
                 onChange={(e) => setNewPlayer({ ...newPlayer, team: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              />
+              >
+                <option value="FA">FA (무소속)</option>
+                {teams.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-[11px] font-bold text-muted-foreground mb-1">샐러리 캡 (몸값)</label>
@@ -527,38 +565,104 @@ export default function AdminDashboard() {
           </form>
         </GlassCard>
 
-        {/* 기존 등록된 선수 목록 및 편집/삭제 카드 그리드 */}
+        {/* 선수 카드 그리드: 팀 변경, 포지션 변경, 주전/후보 토글 탑재 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {players.map((player) => (
-            <GlassCard key={player.id} className="p-4 border-purple/25 bg-purple/5 space-y-3">
+            <GlassCard key={player.id} className="p-4 border-purple/25 bg-purple/5 space-y-3.5">
+              {/* 상단 닉네임 & 삭제 */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-base">{player.summoner_name}</p>
-                  <p className="text-xs text-muted-foreground">{player.position} · {player.tier} (OVR: {player.overall})</p>
+                  <p className="font-bold text-base text-white">{player.summoner_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {player.tier} (OVR: {player.overall})
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded bg-purple/20 px-2 py-1 text-xs font-bold text-purple-300">
-                    {player.team}
-                  </span>
+                <button
+                  onClick={() => handleDeletePlayer(player.id, player.summoner_name)}
+                  className="text-muted-foreground hover:text-red-400 transition-colors p-1"
+                  title="선수 삭제"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+
+              {/* 소속 팀 & 포지션 & 로스터(주전/후보) 실시간 배정 컨트롤러 */}
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                      소속 팀 배정
+                    </label>
+                    <select
+                      value={player.team || 'FA'}
+                      onChange={(e) => handleChangePlayerTeam(player.id, e.target.value)}
+                      className="w-full rounded border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-cyan-300 font-bold focus:outline-none"
+                    >
+                      <option value="FA">FA (무소속)</option>
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.name}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                      포지션 지정
+                    </label>
+                    <select
+                      value={player.position || 'MID'}
+                      onChange={(e) => handleChangePlayerPosition(player.id, e.target.value)}
+                      className="w-full rounded border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-foreground font-semibold focus:outline-none"
+                    >
+                      <option value="TOP">TOP</option>
+                      <option value="JG">JG</option>
+                      <option value="MID">MID</option>
+                      <option value="ADC">ADC</option>
+                      <option value="SUP">SUP</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                    로스터 역할 (클릭 시 즉시 전환)
+                  </label>
                   <button
-                    onClick={() => handleDeletePlayer(player.id, player.summoner_name)}
-                    className="text-muted-foreground hover:text-red-400 transition-colors"
-                    title="선수 삭제"
+                    onClick={() => handleToggleSubstitute(player.id, Boolean(player.is_substitute))}
+                    className={`w-full py-1.5 px-2 rounded text-xs font-bold border transition-colors flex items-center justify-center gap-1.5 ${
+                      player.is_substitute
+                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25'
+                        : 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
+                    }`}
                   >
-                    <Trash2 className="size-4" />
+                    {player.is_substitute ? (
+                      <>
+                        <Users className="size-3.5" /> 식스맨 / 후보
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="size-3.5" /> 선발 / 주전
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
+
+              {/* 하단 스탯 및 몸값 수정 */}
               <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-                <span>몸값: <strong className="text-gold">{player.salary}</strong></span>
+                <span>
+                  몸값: <strong className="text-gold">{player.salary}</strong>
+                </span>
                 <div className="flex gap-1.5">
-                  <button 
+                  <button
                     onClick={() => handleUpdatePlayer(player.id, 'overall', player.overall)}
                     className="rounded bg-white/10 px-2.5 py-1 font-bold hover:bg-white/20"
                   >
                     OVR 수정
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleUpdatePlayer(player.id, 'salary', player.salary)}
                     className="rounded bg-gold/20 px-2.5 py-1 font-bold text-gold hover:bg-gold hover:text-black"
                   >
