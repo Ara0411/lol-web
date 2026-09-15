@@ -4,21 +4,22 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ShieldAlert,
-  Coins,
   Swords,
   Users,
-  Save,
-  UserPlus,
   Trash2,
   PlusCircle,
   Building2,
   Shield,
-  UserCheck,
+  UserMinus,
+  UserPlus2,
+  Edit3,
 } from 'lucide-react'
 import { useAdmin } from '@/lib/use-admin'
 import { supabase } from '@/lib/supabase'
 import { PageTitle } from '@/components/page-title'
 import { GlassCard } from '@/components/ui/glass-card'
+
+const POSITIONS = ['TOP', 'JG', 'MID', 'ADC', 'SUP']
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -29,28 +30,15 @@ export default function AdminDashboard() {
   const [players, setPlayers] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(true)
 
-  // 신규 팀 생성 폼 상태
+  // 신규 팀 생성 상태
   const [newTeam, setNewTeam] = useState({
     id: '',
     name: '',
     short: '',
-    points: 15400,
-    color: '#22d3ee',
   })
 
-  // 신규 선수 추가 폼 상태 (주력 챔피언 및 후보 여부 포함)
-  const [newPlayer, setNewPlayer] = useState({
-    summoner_name: '',
-    position: 'MID',
-    tier: 'Emerald',
-    overall: 85,
-    rarity: 'rare',
-    team: 'FA',
-    salary: 1000,
-    title: '새싹 소환사',
-    is_substitute: false,
-    favorite_champions: ['', '', ''],
-  })
+  // 팀별 선수 추가 선택 상태 (teamId: playerId)
+  const [selectedPlayerForTeam, setSelectedPlayerForTeam] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -67,9 +55,9 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     setDataLoading(true)
     const [teamsRes, matchesRes, playersRes] = await Promise.all([
-      supabase.from('teams').select('*').order('points', { ascending: false }),
+      supabase.from('teams').select('*').order('name', { ascending: true }),
       supabase.from('matches').select('*').order('id', { ascending: true }),
-      supabase.from('players').select('*').order('overall', { ascending: false }),
+      supabase.from('players').select('*').order('summoner_name', { ascending: true }),
     ])
     if (teamsRes.data) setTeams(teamsRes.data)
     if (matchesRes.data) setMatches(matchesRes.data)
@@ -77,39 +65,38 @@ export default function AdminDashboard() {
     setDataLoading(false)
   }
 
-  // ➕ 신규 팀 생성 핸들러
+  // ➕ 신규 팀 생성 (초기 포인트 없음)
   const handleAddTeam = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTeam.id || !newTeam.name || !newTeam.short) {
+    if (!newTeam.id.trim() || !newTeam.name.trim() || !newTeam.short.trim()) {
       return alert('팀 ID, 이름, 약칭을 모두 입력해주세요!')
     }
 
-    const { error } = await supabase.from('teams').insert([newTeam])
+    const { error } = await supabase.from('teams').insert([
+      {
+        id: newTeam.id.trim(),
+        name: newTeam.name.trim(),
+        short: newTeam.short.trim().toUpperCase(),
+      },
+    ])
+
     if (error) {
       alert('팀 생성 실패: ' + error.message)
     } else {
-      alert('새로운 팀이 성공적으로 생성되었습니다!')
-      setNewTeam({
-        id: '',
-        name: '',
-        short: '',
-        points: 15400,
-        color: '#22d3ee',
-      })
+      alert('새로운 팀이 등록되었습니다.')
+      setNewTeam({ id: '', name: '', short: '' })
       fetchAdminData()
     }
   }
 
-  // 🗑️ 팀 삭제 핸들러
+  // 🗑️ 팀 삭제
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
-    if (
-      !confirm(
-        `정말 "${teamName}" 팀을 삭제하시겠습니까? 소속 선수들의 팀 정보가 꼬일 수 있으니 주의하세요!`,
-      )
-    )
-      return
+    if (!confirm(`정말 "${teamName}" 팀을 삭제하시겠습니까? 소속 선수는 FA로 전환됩니다.`)) return
 
+    // 소속 선수를 먼저 FA로 해제
+    await supabase.from('players').update({ team: 'FA' }).eq('team', teamName)
     const { error } = await supabase.from('teams').delete().eq('id', teamId)
+
     if (error) {
       alert('팀 삭제 실패: ' + error.message)
     } else {
@@ -118,177 +105,115 @@ export default function AdminDashboard() {
     }
   }
 
-  // 💾 팀 포인트 수정
-  const handleUpdateTeamPoint = async (teamId: string, currentPoints: number) => {
-    const input = prompt('수정할 팀 포인트를 입력하세요:', String(currentPoints))
-    if (input === null) return
-    const newPoints = parseInt(input, 10)
+  // 🔄 팀 이름 / 약칭 수정
+  const handleEditTeamInfo = async (team: any) => {
+    const newName = prompt('수정할 팀 이름을 입력하세요:', team.name)
+    if (newName === null || !newName.trim()) return
 
-    if (!isNaN(newPoints)) {
-      const { error } = await supabase.from('teams').update({ points: newPoints }).eq('id', teamId)
-      if (error) alert('포인트 업데이트 실패: ' + error.message)
-      else {
-        alert('포인트가 성공적으로 수정되었습니다!')
-        fetchAdminData()
+    const newShort = prompt('수정할 팀 약칭을 입력하세요:', team.short)
+    if (newShort === null || !newShort.trim()) return
+
+    const { error } = await supabase
+      .from('teams')
+      .update({ name: newName.trim(), short: newShort.trim().toUpperCase() })
+      .eq('id', team.id)
+
+    if (error) {
+      alert('팀 정보 수정 실패: ' + error.message)
+    } else {
+      // 기존 소속 선수들의 team 명칭도 동기화
+      if (team.name !== newName.trim()) {
+        await supabase.from('players').update({ team: newName.trim() }).eq('team', team.name)
       }
+      alert('팀 정보가 수정되었습니다.')
+      fetchAdminData()
     }
   }
 
-  // 🔄 선수의 소속 팀 변경 (셀렉트 박스로 즉시 변경)
+  // 🔄 선수 팀 배정 / 변경
   const handleChangePlayerTeam = async (playerId: string, teamName: string) => {
     const { error } = await supabase.from('players').update({ team: teamName }).eq('id', playerId)
-
-    if (error) {
-      alert('팀 배정 실패: ' + error.message)
-    } else {
-      fetchAdminData()
-    }
+    if (error) alert('팀 변경 실패: ' + error.message)
+    else fetchAdminData()
   }
 
-  // 🔄 선수의 포지션 변경
+  // 🔄 선수 포지션 변경
   const handleChangePlayerPosition = async (playerId: string, position: string) => {
     const { error } = await supabase.from('players').update({ position }).eq('id', playerId)
-
-    if (error) {
-      alert('포지션 변경 실패: ' + error.message)
-    } else {
-      fetchAdminData()
-    }
+    if (error) alert('포지션 변경 실패: ' + error.message)
+    else fetchAdminData()
   }
 
-  // 🔄 선수의 주전 / 후보 (식스맨) 토글 전환
+  // 🔄 주전 / 후보 토글
   const handleToggleSubstitute = async (playerId: string, currentStatus: boolean) => {
     const { error } = await supabase
       .from('players')
       .update({ is_substitute: !currentStatus })
       .eq('id', playerId)
-
-    if (error) {
-      alert('로스터 상태 변경 실패: ' + error.message)
-    } else {
-      fetchAdminData()
-    }
+    if (error) alert('로스터 상태 변경 실패: ' + error.message)
+    else fetchAdminData()
   }
 
-  // 💾 매치 정보 수정 (팀 이름, 점수, 상태 통합 제어)
-  const handleUpdateMatch = async (matchId: number, field: string, currentValue: any) => {
-    const fieldLabels: Record<string, string> = {
-      team1: '팀1 이름',
-      team2: '팀2 이름',
-      score1: '팀1 점수',
-      score2: '팀2 점수',
-      status: '경기 상태',
+  // 🔄 선수 텍스트/숫자 필드 직접 수정 (닉네임, 티어, 멸망전 점수)
+  const handleUpdatePlayerField = async (playerId: string, field: string, currentValue: any) => {
+    const fieldNames: Record<string, string> = {
+      summoner_name: '소환사 닉네임',
+      tier: '티어',
+      destruction_score: '멸망전 점수',
     }
 
-    const input = prompt(`새로운 ${fieldLabels[field] || field} 값을 입력하세요:`, String(currentValue))
+    const input = prompt(`새로운 ${fieldNames[field] || field} 값을 입력하세요:`, String(currentValue ?? ''))
+    if (input === null) return
+
+    let updateVal: any = input.trim()
+    if (field === 'destruction_score') {
+      updateVal = parseFloat(input)
+      if (isNaN(updateVal)) return alert('점수는 숫자(소수점 가능)로 입력해주세요.')
+    }
+
+    const { error } = await supabase.from('players').update({ [field]: updateVal }).eq('id', playerId)
+    if (error) alert('수정 실패: ' + error.message)
+    else fetchAdminData()
+  }
+
+  // 🗑️ 선수 카드 DB 삭제
+  const handleDeletePlayer = async (playerId: string, summonerName: string) => {
+    if (!confirm(`정말 "${summonerName}" 선수를 삭제하시겠습니까?`)) return
+    const { error } = await supabase.from('players').delete().eq('id', playerId)
+    if (error) alert('선수 삭제 실패: ' + error.message)
+    else fetchAdminData()
+  }
+
+  // 💾 경기 스코어 / 대진 수정
+  const handleUpdateMatch = async (matchId: number, field: string, currentValue: any) => {
+    const input = prompt(`새로운 ${field} 값을 입력하세요:`, String(currentValue ?? ''))
     if (input === null) return
 
     let updateData = {}
     if (field === 'status') {
       const upperStatus = input.toUpperCase()
       if (!['UPCOMING', 'LIVE', 'FINISHED'].includes(upperStatus)) {
-        return alert('상태는 UPCOMING(예정), LIVE(진행 중), FINISHED(종료) 중 하나여야 합니다.')
+        return alert('상태는 UPCOMING, LIVE, FINISHED 중 하나여야 합니다.')
       }
       updateData = { status: upperStatus }
     } else if (field === 'team1' || field === 'team2') {
-      if (!input.trim()) return alert('팀 이름을 올바르게 입력해주세요.')
       updateData = { [field]: input.trim() }
     } else {
       const parsedNum = parseInt(input, 10)
-      if (isNaN(parsedNum)) return alert('숫자만 입력 가능합니다.')
+      if (isNaN(parsedNum)) return alert('점수는 숫자만 입력해주세요.')
       updateData = { [field]: parsedNum }
     }
 
     const { error } = await supabase.from('matches').update(updateData).eq('id', matchId)
-    if (error) alert('경기 정보 업데이트 실패: ' + error.message)
-    else {
-      fetchAdminData()
-    }
-  }
-
-  // 관리자 전용 선수 정보 수정 함수
-  const handleUpdatePlayer = async (playerId: string, field: string, currentValue: any) => {
-    const input = prompt(`선수의 새로운 ${field} 값을 입력하세요:`, String(currentValue))
-    if (input === null) return
-
-    let updateValue: any = input
-    if (['overall', 'salary'].includes(field)) {
-      updateValue = parseInt(input, 10)
-      if (isNaN(updateValue)) return alert('숫자만 입력 가능합니다.')
-    }
-
-    const { error } = await supabase.from('players').update({ [field]: updateValue }).eq('id', playerId)
-    if (error) alert('선수 정보 업데이트 실패: ' + error.message)
-    else {
-      alert('선수 정보가 수정되었습니다!')
-      fetchAdminData()
-    }
-  }
-
-  // ➕ 신규 선수 카드 추가 핸들러
-  const handleAddPlayer = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newPlayer.summoner_name) {
-      return alert('선수 롤 닉네임을 입력해주세요!')
-    }
-
-    const payload = {
-      id: 'player_' + Math.random().toString(36).substring(2, 9),
-      summoner_name: newPlayer.summoner_name,
-      position: newPlayer.position,
-      tier: newPlayer.tier,
-      overall: Number(newPlayer.overall),
-      rarity: newPlayer.rarity,
-      team: newPlayer.team,
-      salary: Number(newPlayer.salary),
-      title: newPlayer.title,
-      is_substitute: newPlayer.is_substitute,
-      wins: 0,
-      losses: 0,
-      kda: 3.0,
-      win_rate: 50,
-      favorite_champions: newPlayer.favorite_champions.map((c) => c.trim()).filter(Boolean),
-    }
-
-    const { error } = await supabase.from('players').insert([payload])
-    if (error) {
-      alert('선수 등록 실패: ' + error.message)
-    } else {
-      alert('신규 선수 카드가 성공적으로 등록되었습니다!')
-      setNewPlayer({
-        summoner_name: '',
-        position: 'MID',
-        tier: 'Emerald',
-        overall: 85,
-        rarity: 'rare',
-        team: 'FA',
-        salary: 1000,
-        title: '새싹 소환사',
-        is_substitute: false,
-        favorite_champions: ['', '', ''],
-      })
-      fetchAdminData()
-    }
-  }
-
-  // 🗑️ 선수 카드 삭제 핸들러
-  const handleDeletePlayer = async (playerId: string, summonerName: string) => {
-    if (!confirm(`정말 "${summonerName}" 선수의 카드를 삭제하시겠습니까?`)) return
-
-    const { error } = await supabase.from('players').delete().eq('id', playerId)
-    if (error) {
-      alert('선수 삭제 실패: ' + error.message)
-    } else {
-      alert('선수가 삭제되었습니다.')
-      fetchAdminData()
-    }
+    if (error) alert('경기 업데이트 실패: ' + error.message)
+    else fetchAdminData()
   }
 
   if (adminLoading || dataLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-gold">
+      <div className="flex min-h-[60vh] items-center justify-center text-cyan-400">
         <h2 className="flex items-center gap-2 text-lg font-bold animate-pulse">
-          <ShieldAlert className="size-5" /> 관리자 데이터 동기화 중...
+          <ShieldAlert className="size-5" /> 관리자 데이터 불러오는 중...
         </h2>
       </div>
     )
@@ -297,28 +222,28 @@ export default function AdminDashboard() {
   if (!isAdmin) return null
 
   return (
-    <div className="space-y-12 pb-20">
+    <div className="space-y-12 pb-24">
       <PageTitle
         overline="ADMIN MASTER"
         title="리그 관리자 대시보드"
-        subtitle="롤이터 리그의 팀 관리, 포인트, 경기 스코어, 선수 카드 등록 및 로스터 배정을 실시간으로 제어할 수 있는 마스터 패널입니다."
+        subtitle="팀 생성 및 소속 로스터 인원 조정, 등록된 선수 정보 수정, 경기 대진을 통제합니다."
       />
 
-      {/* 1. 팀 관리 및 생성 패널 */}
+      {/* 1. 팀 생성 및 팀별 소속 인원 관리 */}
       <section className="space-y-6">
         <div className="flex items-center gap-2">
           <Building2 className="size-5 text-cyan-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-cyan-400">
-            팀 관리 및 생성
+            팀 생성 및 소속 인원 관리
           </h2>
         </div>
 
-        {/* 신규 팀 등록 폼 */}
-        <GlassCard className="p-6 border-cyan/30 bg-cyan/5">
-          <h3 className="text-sm font-bold text-cyan-300 mb-4 flex items-center gap-2">
-            <PlusCircle className="size-4" /> 신규 팀 생성
+        {/* 팀 등록 폼 */}
+        <GlassCard className="p-5 border-cyan/30 bg-cyan/5">
+          <h3 className="text-sm font-bold text-cyan-300 mb-3 flex items-center gap-2">
+            <PlusCircle className="size-4" /> 신규 팀 등록
           </h3>
-          <form onSubmit={handleAddTeam} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <form onSubmit={handleAddTeam} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 ID (고유 영문)</label>
               <input
@@ -326,7 +251,7 @@ export default function AdminDashboard() {
                 placeholder="예: team_test1"
                 value={newTeam.id}
                 onChange={(e) => setNewTeam({ ...newTeam, id: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none"
               />
             </div>
             <div>
@@ -336,72 +261,137 @@ export default function AdminDashboard() {
                 placeholder="예: test1"
                 value={newTeam.name}
                 onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 약칭 (Short)</label>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">팀 약칭</label>
               <input
                 type="text"
                 placeholder="예: TST"
                 value={newTeam.short}
                 onChange={(e) => setNewTeam({ ...newTeam, short: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">초기 포인트</label>
-              <input
-                type="number"
-                value={newTeam.points}
-                onChange={(e) => setNewTeam({ ...newTeam, points: Number(e.target.value) })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none"
               />
             </div>
             <div className="flex items-end">
               <button
                 type="submit"
-                className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-background hover:bg-cyan-400 transition-colors"
+                className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-colors"
               >
-                + 팀 생성하기
+                + 팀 생성
               </button>
             </div>
           </form>
         </GlassCard>
 
-        {/* 기존 등록된 팀 목록 및 관리 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {teams.map((team) => (
-            <GlassCard key={team.id} className="p-4 border-cyan/20 bg-cyan/5 flex items-center justify-between">
-              <div>
-                <p className="font-bold text-lg">
-                  {team.name} <span className="text-xs text-muted-foreground">({team.short})</span>
-                </p>
-                <p className="text-sm text-gold font-semibold">{team.points.toLocaleString()} 포인트</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleUpdateTeamPoint(team.id, team.points)}
-                  className="rounded bg-white/10 px-2.5 py-1 text-xs font-bold hover:bg-white/20"
-                >
-                  포인트 수정
-                </button>
-                <button
-                  onClick={() => handleDeleteTeam(team.id, team.name)}
-                  className="text-muted-foreground hover:text-red-400 transition-colors"
-                  title="팀 삭제"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            </GlassCard>
-          ))}
+        {/* 생성된 팀 목록 & 소속 선수 관리 카드 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {teams.map((team) => {
+            const teamMembers = players.filter((p) => p.team === team.name || p.team === team.id)
+            const faPlayers = players.filter((p) => p.team !== team.name && p.team !== team.id)
+
+            return (
+              <GlassCard key={team.id} className="p-5 border-cyan/20 bg-cyan/5 space-y-4">
+                {/* 팀 상단 바 */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                      {team.name}
+                      <span className="text-xs font-normal text-muted-foreground">({team.short})</span>
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground">
+                      소속 인원: <span className="text-cyan-400 font-bold">{teamMembers.length}명</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleEditTeamInfo(team)}
+                      className="px-2.5 py-1 text-xs rounded bg-white/10 hover:bg-white/20 font-bold flex items-center gap-1"
+                    >
+                      <Edit3 className="size-3" /> 팀 수정
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTeam(team.id, team.name)}
+                      className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"
+                      title="팀 삭제"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 소속 선수 리스트 */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-muted-foreground">소속 로스터</span>
+                  {teamMembers.length === 0 ? (
+                    <div className="text-xs text-muted-foreground/60 py-3 text-center border border-dashed border-white/10 rounded-lg">
+                      소속된 선수가 없습니다.
+                    </div>
+                  ) : (
+                    teamMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 font-bold text-[10px] text-cyan-300">
+                            {member.position}
+                          </span>
+                          <span className="font-bold text-white">{member.summoner_name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {member.is_substitute ? '(후보)' : '(주전)'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleChangePlayerTeam(member.id, 'FA')}
+                          className="text-[11px] text-red-400 hover:underline flex items-center gap-1 font-bold"
+                          title="팀에서 제외하여 FA로 보냄"
+                        >
+                          <UserMinus className="size-3" /> 방출 (FA)
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* 팀에 선수 즉시 추가/영입 */}
+                <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                  <select
+                    value={selectedPlayerForTeam[team.id] || ''}
+                    onChange={(e) =>
+                      setSelectedPlayerForTeam({ ...selectedPlayerForTeam, [team.id]: e.target.value })
+                    }
+                    className="flex-1 rounded border border-white/20 bg-black/50 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
+                  >
+                    <option value="">선수 선택 후 팀에 추가...</option>
+                    {faPlayers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.summoner_name} ({p.position} · 현재: {p.team || 'FA'})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      const playerId = selectedPlayerForTeam[team.id]
+                      if (!playerId) return alert('추가할 선수를 선택해주세요.')
+                      handleChangePlayerTeam(playerId, team.name)
+                      setSelectedPlayerForTeam({ ...selectedPlayerForTeam, [team.id]: '' })
+                    }}
+                    className="px-3 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 font-bold text-black text-xs flex items-center gap-1 shrink-0"
+                  >
+                    <UserPlus2 className="size-3.5" /> 영입
+                  </button>
+                </div>
+              </GlassCard>
+            )
+          })}
         </div>
       </section>
 
-      {/* 2. 대진표 및 경기 스코어 제어 패널 */}
-      <section>
-        <div className="mb-4 flex items-center gap-2">
+      {/* 2. 대진표 및 경기 스코어 제어 */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
           <Swords className="size-5 text-cyan-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-cyan-400">
             경기 스코어 및 팀 제어
@@ -450,7 +440,7 @@ export default function AdminDashboard() {
                     onClick={() => handleUpdateMatch(match.id, 'status', match.status)}
                     className="rounded border border-cyan/50 bg-cyan/10 px-3 py-1 text-xs font-bold text-cyan-400 hover:bg-cyan hover:text-black"
                   >
-                    상태 변경 ({match.status})
+                    상태 ({match.status})
                   </button>
                 </div>
               </div>
@@ -459,140 +449,50 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 3. 선수 카드 관리 & 팀 로스터 배정 패널 */}
-      <section className="space-y-6">
+      {/* 3. 등록된 선수 카드 목록 및 상세 수정 */}
+      <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-purple-400" />
           <h2 className="font-display text-lg font-bold uppercase tracking-wide text-purple-400">
-            선수 목록 & 팀 로스터 실시간 배정
+            등록된 선수 카드 관리 및 수정
           </h2>
         </div>
 
-        {/* 신규 등록 폼 */}
-        <GlassCard className="p-6 border-purple/30 bg-purple/5">
-          <h3 className="text-sm font-bold text-purple-300 mb-4 flex items-center gap-2">
-            <UserPlus className="size-4" /> 신규 선수 카드 수동 등록
-          </h3>
-          <form onSubmit={handleAddPlayer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">롤 닉네임</label>
-              <input
-                type="text"
-                placeholder="예: Hideonbush#KR1"
-                value={newPlayer.summoner_name}
-                onChange={(e) => setNewPlayer({ ...newPlayer, summoner_name: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">포지션</label>
-              <select
-                value={newPlayer.position}
-                onChange={(e) => setNewPlayer({ ...newPlayer, position: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              >
-                <option value="TOP">TOP</option>
-                <option value="JG">JG</option>
-                <option value="MID">MID</option>
-                <option value="ADC">ADC</option>
-                <option value="SUP">SUP</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">티어</label>
-              <input
-                type="text"
-                placeholder="예: Challenger"
-                value={newPlayer.tier}
-                onChange={(e) => setNewPlayer({ ...newPlayer, tier: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">오버롤 (OVR)</label>
-              <input
-                type="number"
-                value={newPlayer.overall}
-                onChange={(e) => setNewPlayer({ ...newPlayer, overall: Number(e.target.value) })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">카드 등급</label>
-              <select
-                value={newPlayer.rarity}
-                onChange={(e) => setNewPlayer({ ...newPlayer, rarity: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              >
-                <option value="common">일반 (Common)</option>
-                <option value="rare">레어 (Rare)</option>
-                <option value="epic">에픽 (Epic)</option>
-                <option value="legendary">전설 (Legendary)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">소속 팀 (또는 FA)</label>
-              <select
-                value={newPlayer.team}
-                onChange={(e) => setNewPlayer({ ...newPlayer, team: e.target.value })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              >
-                <option value="FA">FA (무소속)</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.name}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-muted-foreground mb-1">샐러리 캡 (몸값)</label>
-              <input
-                type="number"
-                value={newPlayer.salary}
-                onChange={(e) => setNewPlayer({ ...newPlayer, salary: Number(e.target.value) })}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-purple-400 focus:outline-none"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-500 transition-colors"
-              >
-                + 선수 카드 등록하기
-              </button>
-            </div>
-          </form>
-        </GlassCard>
-
-        {/* 선수 카드 그리드: 팀 변경, 포지션 변경, 주전/후보 토글 탑재 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {players.map((player) => (
             <GlassCard key={player.id} className="p-4 border-purple/25 bg-purple/5 space-y-3.5">
-              {/* 상단 닉네임 & 삭제 */}
-              <div className="flex items-center justify-between">
+              {/* 선수 헤더 및 정보 직접 수정 버튼 */}
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-bold text-base text-white">{player.summoner_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {player.tier} (OVR: {player.overall})
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-base text-white">{player.summoner_name}</p>
+                    <button
+                      onClick={() => handleUpdatePlayerField(player.id, 'summoner_name', player.summoner_name)}
+                      className="text-muted-foreground hover:text-white"
+                      title="닉네임 수정"
+                    >
+                      <Edit3 className="size-3" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    티어: <strong className="text-gray-300">{player.tier}</strong> · 멸망전 점수:{' '}
+                    <strong className="text-amber-400">{player.destruction_score ?? 0}</strong>
                   </p>
                 </div>
                 <button
                   onClick={() => handleDeletePlayer(player.id, player.summoner_name)}
                   className="text-muted-foreground hover:text-red-400 transition-colors p-1"
-                  title="선수 삭제"
+                  title="선수 카드 삭제"
                 >
                   <Trash2 className="size-4" />
                 </button>
               </div>
 
-              {/* 소속 팀 & 포지션 & 로스터(주전/후보) 실시간 배정 컨트롤러 */}
+              {/* 포지션 & 소속 팀 실시간 컨트롤러 */}
               <div className="space-y-2 pt-2 border-t border-white/10">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">
-                      소속 팀 배정
-                    </label>
+                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">소속 팀</label>
                     <select
                       value={player.team || 'FA'}
                       onChange={(e) => handleChangePlayerTeam(player.id, e.target.value)}
@@ -608,27 +508,23 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">
-                      포지션 지정
-                    </label>
+                    <label className="block text-[10px] font-bold text-muted-foreground mb-1">포지션</label>
                     <select
                       value={player.position || 'MID'}
                       onChange={(e) => handleChangePlayerPosition(player.id, e.target.value)}
                       className="w-full rounded border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-foreground font-semibold focus:outline-none"
                     >
-                      <option value="TOP">TOP</option>
-                      <option value="JG">JG</option>
-                      <option value="MID">MID</option>
-                      <option value="ADC">ADC</option>
-                      <option value="SUP">SUP</option>
+                      {POSITIONS.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {pos}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* 주전 / 후보 토글 */}
                 <div>
-                  <label className="block text-[10px] font-bold text-muted-foreground mb-1">
-                    로스터 역할 (클릭 시 즉시 전환)
-                  </label>
                   <button
                     onClick={() => handleToggleSubstitute(player.id, Boolean(player.is_substitute))}
                     className={`w-full py-1.5 px-2 rounded text-xs font-bold border transition-colors flex items-center justify-center gap-1.5 ${
@@ -650,25 +546,22 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* 하단 스탯 및 몸값 수정 */}
-              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-                <span>
-                  몸값: <strong className="text-gold">{player.salary}</strong>
-                </span>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => handleUpdatePlayer(player.id, 'overall', player.overall)}
-                    className="rounded bg-white/10 px-2.5 py-1 font-bold hover:bg-white/20"
-                  >
-                    OVR 수정
-                  </button>
-                  <button
-                    onClick={() => handleUpdatePlayer(player.id, 'salary', player.salary)}
-                    className="rounded bg-gold/20 px-2.5 py-1 font-bold text-gold hover:bg-gold hover:text-black"
-                  >
-                    몸값 수정
-                  </button>
-                </div>
+              {/* 스탯(티어/멸망전 점수) 빠른 수정 */}
+              <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-white/10 text-xs">
+                <button
+                  onClick={() => handleUpdatePlayerField(player.id, 'tier', player.tier)}
+                  className="rounded bg-white/10 px-2 py-1 font-bold hover:bg-white/20 text-[11px]"
+                >
+                  티어 변경
+                </button>
+                <button
+                  onClick={() =>
+                    handleUpdatePlayerField(player.id, 'destruction_score', player.destruction_score)
+                  }
+                  className="rounded bg-amber-500/20 px-2 py-1 font-bold text-amber-300 hover:bg-amber-500/30 text-[11px]"
+                >
+                  점수 변경
+                </button>
               </div>
             </GlassCard>
           ))}
