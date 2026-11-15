@@ -4,17 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import {
   ArrowRight,
-  BadgeCheck,
   ChevronDown,
   Coins,
-  Gamepad2,
   Headphones,
-  MessageCircle,
-  ShieldCheck,
   Sparkles,
   Swords,
   Trophy,
-  UserPlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -35,45 +30,43 @@ const FEATURES = [
     icon: Swords,
     title: '매일 열리는 내전',
     desc: '내전 봇이 모집부터 팀 구성, 결과 기록까지 자동으로. 버튼 한 번이면 참가 완료.',
-    tone: 'cyan',
   },
   {
     icon: Coins,
     title: '포인트 & 상점',
     desc: '내전을 끝낼 때마다 포인트가 쌓여요. 모은 포인트로 상점에서 보상을 받아가세요.',
-    tone: 'gold',
   },
   {
     icon: Trophy,
     title: '시즌 리그전',
     desc: '팀을 꾸려 참가하는 멸망전 리그. 대진표, 선수 카드, 이적 시장까지 사이트에서 확인.',
-    tone: 'purple',
   },
   {
     icon: Headphones,
     title: '음성 채널 & 듀오',
     desc: '솔랭 듀오, 자랭 5인큐, 칼바람까지. 언제 들어와도 같이 할 사람이 있어요.',
-    tone: 'success',
   },
-] as const
-
-const STEPS = [
-  { icon: UserPlus, title: '서버 참여', desc: '아래 버튼으로 디스코드 서버에 들어와요.' },
-  { icon: BadgeCheck, title: '닉네임 인증', desc: '롤 닉네임과 티어·포지션을 등록해요.' },
-  { icon: Gamepad2, title: '내전 참가', desc: '모집 채널에서 버튼을 눌러 바로 참가!' },
 ]
 
+const STEPS = [
+  { title: '서버 참여', desc: '아래 버튼으로 디스코드 서버에 들어와요.' },
+  { title: '닉네임 인증', desc: '롤 닉네임과 티어·포지션을 등록해요.' },
+  { title: '내전 참가', desc: '모집 채널에서 버튼을 눌러 바로 참가!' },
+]
+
+// 홈에는 핵심만 — 전체 규칙은 app/rules/page.tsx
 const RULES = [
-  '서로 존중해요. 욕설·패드립·저격은 즉시 제재돼요.',
-  '내전 무단 이탈, 고의 트롤은 경고 누적 대상이에요.',
-  '홍보·도배·타 서버 유도는 금지예요.',
-  '분쟁이 생기면 혼자 해결하려 하지 말고 운영진에게 알려주세요.',
+  '만 18세 이상만 이용할 수 있어요. 지인 초대 시 지원서에 지인을 꼭 적어주세요.',
+  '경고 2회 누적 시 추방돼요. (1개월 클린 활동 시 1회 차감)',
+  '위장 티어가 적발되면 해당 경기 중단(쫑) 후 즉시 추방돼요.',
+  '오후 8시 이후에는 참가 후 30분 이내 취소할 수 없어요.',
+  '내전은 3판 2선승제, 하드 피어리스로 진행해요.',
 ]
 
 const FAQ = [
   {
     q: '티어가 낮아도 내전에 참가할 수 있나요?',
-    a: '물론이에요. 내전은 티어 상관없이 참가할 수 있고, 팀은 밸런스를 맞춰서 나눠요.',
+    a: '물론이에요. 티어 상관없이 참가할 수 있고, 팀은 밸런스를 맞춰서 나눠요. 마스터 600점 이상은 상대팀과 ±200점대 맞밸런스가 필수예요.',
   },
   {
     q: '포인트는 어떻게 모으나요?',
@@ -85,16 +78,10 @@ const FAQ = [
   },
   {
     q: '문제가 생기면 어디에 말하나요?',
-    a: '문의 채널에 남기거나 운영진에게 DM 주세요. 최대한 빨리 확인할게요.',
+    a: '규칙 위반 문의와 서버 관련 문의는 관리자 DM으로 보내주세요.',
   },
 ]
 
-const TONE: Record<string, string> = {
-  cyan: 'text-cyan bg-cyan/10 ring-cyan/25',
-  gold: 'text-gold bg-gold/10 ring-gold/25',
-  purple: 'text-purple bg-purple/10 ring-purple/25',
-  success: 'text-success bg-success/10 ring-success/25',
-}
 
 /* ------------------------------------------------------------------ */
 
@@ -122,14 +109,6 @@ function JoinButton({ size = 'lg' }: { size?: 'lg' | 'md' }) {
       디스코드 참여하기
       <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
     </a>
-  )
-}
-
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.3em] text-cyan/70">
-      {children}
-    </p>
   )
 }
 
@@ -194,14 +173,13 @@ export default function HomePage() {
       {/* ================= FEATURES ================= */}
       <section id="features" className="scroll-mt-24">
         <div className="mb-10 text-center">
-          <Eyebrow>What we do</Eyebrow>
           <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">여운에서 할 수 있는 것</h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          {FEATURES.map(({ icon: Icon, title, desc, tone }) => (
+          {FEATURES.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="glass glass-hover rounded-2xl p-6">
-              <span className={cn('mb-5 grid size-12 place-items-center rounded-xl ring-1', TONE[tone])}>
-                <Icon className="size-6" />
+              <span className="mb-5 grid size-12 place-items-center rounded-full bg-gradient-to-b from-cyan/15 to-transparent ring-1 ring-cyan/20 shadow-[0_0_24px_-8px_rgba(var(--glow),0.6)]">
+                <Icon className="size-[22px] text-[#dbe4ff]" strokeWidth={1.4} />
               </span>
               <h3 className="text-lg font-bold">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
@@ -213,20 +191,16 @@ export default function HomePage() {
       {/* ================= HOW TO JOIN ================= */}
       <section>
         <div className="mb-10 text-center">
-          <Eyebrow>How to start</Eyebrow>
           <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">3단계면 바로 시작</h2>
         </div>
         <ol className="grid gap-4 md:grid-cols-3">
-          {STEPS.map(({ icon: Icon, title, desc }, i) => (
+          {STEPS.map(({ title, desc }, i) => (
             <li key={title} className="glass relative overflow-hidden rounded-2xl p-6">
-              <span className="pointer-events-none absolute -right-2 -top-6 font-display text-8xl font-black text-white/[0.04]">
-                {i + 1}
+              <span className="font-serif text-4xl font-extrabold text-gold/90">
+                {String(i + 1).padStart(2, '0')}
               </span>
-              <span className="mb-4 grid size-10 place-items-center rounded-lg bg-cyan/10 text-cyan">
-                <Icon className="size-5" />
-              </span>
-              <p className="font-mono text-[11px] font-bold text-cyan">STEP {i + 1}</p>
-              <h3 className="mt-1 text-base font-bold">{title}</h3>
+              <span className="mt-3 block h-px w-10 bg-gradient-to-r from-gold/60 to-transparent" />
+              <h3 className="mt-4 text-base font-bold">{title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
             </li>
           ))}
@@ -236,10 +210,8 @@ export default function HomePage() {
       {/* ================= RULES + FAQ ================= */}
       <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
         <div className="glass rounded-2xl p-6 sm:p-8">
-          <div className="mb-5 flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-lg bg-success/10 text-success">
-              <ShieldCheck className="size-5" />
-            </span>
+          <div className="mb-5 flex items-center gap-3">
+            <span className="h-5 w-[3px] rounded-full bg-gradient-to-b from-gold to-gold/20" />
             <h2 className="font-serif text-lg font-extrabold">서버 기본 규칙</h2>
           </div>
           <ul className="space-y-3">
@@ -256,15 +228,13 @@ export default function HomePage() {
             href="/rules"
             className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-cyan"
           >
-            전체 규정 보기 <ArrowRight className="size-3.5" />
+            전체 규칙 보기 <ArrowRight className="size-3.5" />
           </Link>
         </div>
 
         <div className="glass rounded-2xl p-6 sm:p-8">
-          <div className="mb-5 flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-lg bg-purple/10 text-purple">
-              <MessageCircle className="size-5" />
-            </span>
+          <div className="mb-5 flex items-center gap-3">
+            <span className="h-5 w-[3px] rounded-full bg-gradient-to-b from-gold to-gold/20" />
             <h2 className="font-serif text-lg font-extrabold">자주 묻는 질문</h2>
           </div>
           <div className="divide-y divide-border">
