@@ -31,6 +31,7 @@
   --color-danger: var(--danger);
 
   --font-sans: var(--font-inter), var(--font-noto-kr), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-myeongjo), serif;
   --font-display: var(--font-orbitron), var(--font-noto-kr), var(--font-inter), sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -39,65 +40,70 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* 기본값: 다크 모드 (dark Mode) */
+/* 기본값: 다크 모드 — "여운" 달밤 테마 */
 :root {
-    color-scheme: dark;
-  --background: #121622;
-  --foreground: #e8ecf5;
-  --card: #10121b;
-  --card-foreground: #e8ecf5;
-  --popover: #10121b;
-  --popover-foreground: #e8ecf5;
-  --primary: #22d3ee;
-  --primary-foreground: #04121a;
-  --secondary: #1a1d2b;
-  --secondary-foreground: #e8ecf5;
-  --muted: #161927;
-  --muted-foreground: #8b93ad;
-  --accent: #a855f7;
-  --accent-foreground: #f5f0ff;
-  --destructive: #f43f5e;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #22d3ee;
+  color-scheme: dark;
+  --background: #0a0f1e;
+  --foreground: #e9edf8;
+  --card: #0e1428;
+  --card-foreground: #e9edf8;
+  --popover: #0e1428;
+  --popover-foreground: #e9edf8;
+  --primary: #a5b4fc;
+  --primary-foreground: #0a0f1e;
+  --secondary: #151c33;
+  --secondary-foreground: #e9edf8;
+  --muted: #121931;
+  --muted-foreground: #8e98b8;
+  --accent: #c4b5fd;
+  --accent-foreground: #0a0f1e;
+  --destructive: #fb7185;
+  --border: rgba(199, 210, 254, 0.1);
+  --input: rgba(199, 210, 254, 0.14);
+  --ring: #a5b4fc;
 
-  --neon-cyan: #22d3ee;
-  --neon-purple: #a855f7;
-  --gold: #f5c451;
-  --success: #34d399;
-  --danger: #f43f5e;
+  /* 이름은 기존 코드 호환용 — 실제 색은 달빛/라벤더/등불 */
+  --neon-cyan: #a5b4fc;   /* 달빛 (메인 포인트) */
+  --neon-purple: #c4b5fd; /* 라벤더 */
+  --gold: #f6c27a;        /* 등불 */
+  --success: #6ee7b7;
+  --danger: #fb7185;
 
-  --radius: 0.75rem;
+  --glow: 165, 180, 252;  /* 달빛 rgb — 그림자/글로우용 */
+
+  --radius: 0.875rem;
 }
-/* 화이트 모드 (White Mode) - html에 .white 클래스가 붙을 때 */
+/* 화이트 모드 — 눈 내린 낮 */
 .white {
   color-scheme: light;
-  --background: #f7f8fa;
-  --foreground: #222733;
+  --background: #f4f6fc;
+  --foreground: #1b2140;
   --card: #ffffff;
-  --card-foreground: #222733;
+  --card-foreground: #1b2140;
   --popover: #ffffff;
-  --popover-foreground: #222733;
-  --primary: #0284c7;
+  --popover-foreground: #1b2140;
+  --primary: #4f5bd5;
   --primary-foreground: #ffffff;
-  --secondary: #eef2f6;
-  --secondary-foreground: #222733;
-  --muted: #eef2f6;
-  --muted-foreground: #717d96;
-  --accent: #7c3aed;
+  --secondary: #eaeef8;
+  --secondary-foreground: #1b2140;
+  --muted: #eaeef8;
+  --muted-foreground: #6a7394;
+  --accent: #7c6fe0;
   --accent-foreground: #ffffff;
   --destructive: #e11d48;
-  --border: rgba(0, 0, 0, 0.06);
-  --input: rgba(0, 0, 0, 0.08);
-  --ring: #0284c7;
+  --border: rgba(27, 33, 64, 0.08);
+  --input: rgba(27, 33, 64, 0.1);
+  --ring: #4f5bd5;
 
-  --neon-cyan: #0284c7;
-  --neon-purple: #7c3aed;
-  --gold: #b45309;
+  --neon-cyan: #4f5bd5;
+  --neon-purple: #7c6fe0;
+  --gold: #b7791f;
   --success: #047857;
   --danger: #e11d48;
 
-  --radius: 0.75rem;
+  --glow: 79, 91, 213;
+
+  --radius: 0.875rem;
 }
 
 @layer base {
@@ -110,16 +116,41 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(60rem 40rem at 12% -10%, rgba(34, 211, 238, 0.06), transparent 60%),
-      radial-gradient(55rem 40rem at 92% 0%, rgba(168, 85, 247, 0.07), transparent 60%);
+      radial-gradient(50rem 36rem at 88% -8%, rgba(199, 210, 254, 0.09), transparent 60%),
+      radial-gradient(60rem 40rem at 0% 100%, rgba(99, 102, 241, 0.08), transparent 60%),
+      linear-gradient(180deg, #0c1226 0%, var(--background) 40%);
     background-attachment: fixed;
   }
+  .white body {
+    background-image:
+      radial-gradient(50rem 36rem at 88% -8%, rgba(79, 91, 213, 0.06), transparent 60%);
+  }
+  /* 은은하게 내리는 눈 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      radial-gradient(1.5px 1.5px at 10% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 30% 70%, #fff, transparent),
+      radial-gradient(2px 2px at 55% 35%, rgba(255,255,255,.8), transparent),
+      radial-gradient(1px 1px at 75% 85%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 10%, rgba(255,255,255,.9), transparent),
+      radial-gradient(1px 1px at 45% 55%, #fff, transparent);
+    background-size: 340px 340px;
+    animation: snowfall 28s linear infinite;
+  }
+  .white body::before { display: none; }
+  body > * { position: relative; z-index: 1; }
 }
 
 @layer components {
   /* Glassmorphism surface */
   .glass {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+    background: linear-gradient(180deg, rgba(199, 210, 254, 0.05), rgba(199, 210, 254, 0.012));
     border: 1px solid var(--border);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
@@ -128,26 +159,26 @@
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
   }
   .glass-hover:hover {
-    border-color: rgba(34, 211, 238, 0.45);
-    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.15), 0 12px 40px -12px rgba(34, 211, 238, 0.35);
+    border-color: rgba(var(--glow), 0.45);
+    box-shadow: 0 0 0 1px rgba(var(--glow), 0.15), 0 12px 40px -12px rgba(var(--glow), 0.35);
     transform: translateY(-2px);
   }
 
   .neon-cyan-glow {
-    box-shadow: 0 0 24px -6px rgba(34, 211, 238, 0.55);
+    box-shadow: 0 0 24px -6px rgba(var(--glow), 0.55);
   }
   .neon-purple-glow {
-    box-shadow: 0 0 24px -6px rgba(168, 85, 247, 0.55);
+    box-shadow: 0 0 24px -6px rgba(196, 181, 253, 0.55);
   }
   .gold-glow {
-    box-shadow: 0 0 22px -6px rgba(245, 196, 81, 0.6);
+    box-shadow: 0 0 22px -6px rgba(246, 194, 122, 0.6);
   }
 
   .text-glow-cyan {
-    text-shadow: 0 0 18px rgba(34, 211, 238, 0.55);
+    text-shadow: 0 0 18px rgba(var(--glow), 0.55);
   }
   .text-glow-purple {
-    text-shadow: 0 0 18px rgba(168, 85, 247, 0.55);
+    text-shadow: 0 0 18px rgba(196, 181, 253, 0.55);
   }
 
   .grid-bg {
@@ -156,6 +187,14 @@
       linear-gradient(90deg, var(--border) 1px, transparent 1px);
     background-size: 34px 34px;
   }
+}
+
+@keyframes snowfall {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 40px 340px, -30px 340px, 20px 340px, -20px 340px, 30px 340px, -40px 340px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
 }
 
 @keyframes pulse-live {
@@ -183,9 +222,9 @@
   background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(34, 211, 238, 0.25);
+  background: rgba(var(--glow), 0.25);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 211, 238, 0.45);
+  background: rgba(var(--glow), 0.45);
 }
